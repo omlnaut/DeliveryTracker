@@ -1,4 +1,5 @@
 from __future__ import print_function
+from datetime import datetime, timedelta, timezone
 import os.path
 import pickle
 
@@ -36,10 +37,24 @@ def search_tasks(service, query_string):
     # Get all task lists
     tasklists = service.tasklists().list(maxResults=100).execute().get("items", [])
     matching_tasks = []
+    completed_min = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
 
     for tasklist in tasklists:
+        page_token = None
         # Get all tasks in the task list
-        tasks = service.tasks().list(tasklist=tasklist["id"]).execute().get("items", [])
+        tasks_result = (
+            service.tasks()
+            .list(
+                tasklist=tasklist["id"],
+                showCompleted=True,
+                showHidden=True,
+                pageToken=page_token,
+                # completed min does not return pending tasks -.-
+                # completedMin=completed_min,
+            )
+            .execute()
+        )
+        tasks = tasks_result.get("items", [])
         for task in tasks:
             # Check if the query string is in the task's notes
             if query_string in task["title"]:
@@ -51,6 +66,7 @@ def search_tasks(service, query_string):
                         "title": task.get("title", "No Title"),
                         "due": task.get("due", "No Due Date"),
                         "updated": task.get("updated", "No Updated Date"),
+                        "status": task.get("status", "No Status"),
                     }
                 )
     return matching_tasks
@@ -73,6 +89,7 @@ def main():
             print(f"Title: {task['title']}")
             print(f"Due: {task['due']}")
             print(f"Updated: {task['updated']}")
+            print(f"Status: {task['status']}")
             print("-" * 40)
 
 
