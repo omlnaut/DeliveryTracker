@@ -1,14 +1,17 @@
 {
-    "name": "DeliveryTracker Development",
-    "build": {
-        "dockerfile": "../Dockerfile",
-        "context": ".."
+    "name": "Python 3 with Google Cloud SDK",
+    "image": "gcr.io/google.com/cloudsdktool/google-cloud-cli:489.0.0-stable",
+    "features": {
+        "ghcr.io/devcontainers/features/python:1": {
+            "version": "3.10"
+        }
     },
     "customizations": {
         "vscode": {
             "extensions": [
                 "ms-python.python",
-                "ms-python.black-formatter"
+                "ms-python.black-formatter",
+                "googlecloudtools.cloudcode"
             ],
             "settings": {
                 "python.defaultInterpreterPath": "/usr/local/bin/python",
@@ -21,5 +24,6 @@
                 }
             }
         }
-    }
+    },
+    "postCreateCommand": "python3 -m pip install -r requirements.txt"
 }
