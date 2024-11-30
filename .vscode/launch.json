@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Deploy Cloud Function",
+            "type": "cloudcode.cloudfunctions",
+            "request": "launch",
+            "functionName": "Testi",
+            "gen": "GEN_2",
+            "revision": "1",
+            "entryPoint": "access_secret_version",
+            "testInput": "what",
+            "region": "europe-central2",
+            "runtime": "python310"
+        }
+    ]
+}
