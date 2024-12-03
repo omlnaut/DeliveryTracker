@@ -4,54 +4,57 @@ from google.cloud import secretmanager
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 
+from TaskService import TaskService
 from gmail_service import GmailService
 
 # Configure the root logger
 logging.basicConfig(level=logging.INFO)
 
 
-def access_secret_version(request):
-    # Create a logger for this function
-    logger = logging.getLogger(__name__)
-
-    # Replace these variables with your own values
+def _load_credentials() -> Credentials:
     project_id = "deliverytracker-442621"
     secret_name = "omlnaut_credentials"
-    version_id = "latest"  # or specify a version number
+    version_id = "latest"
 
-    # Create the Secret Manager client
+    name = f"projects/{project_id}/secrets/{secret_name}/versions/{version_id}"
     client = secretmanager.SecretManagerServiceClient()
 
-    # Build the resource name of the secret version
-    name = f"projects/{project_id}/secrets/{secret_name}/versions/{version_id}"
+    response = client.access_secret_version(name=name)
+    credentials_info = json.loads(response.payload.data.decode("UTF-8"))
+    return Credentials.from_authorized_user_info(credentials_info)
 
-    try:
-        # Access the secret version
-        response = client.access_secret_version(name=name)
 
-        # Extract the payload as a string
-        payload = response.payload.data.decode("UTF-8")
+def access_secret_version(request):
+    credentials = _load_credentials()
 
-        # Log the secret payload (Avoid logging sensitive data in production)
-        credentials_info = json.loads(response.payload.data.decode("UTF-8"))
-        # Load credentials
-        creds = Credentials.from_authorized_user_info(credentials_info)
+    gmail_service = GmailService(credentials)
+    task_service = TaskService(credentials)
 
-        # Refresh the token if expired
-        if creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+    # fetch dhl emails
+    # TODO: change timeframe to something more reasonable
+    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(days=14)
+    if not dhl_mails:
+        return "No DHL pickup notifications found", 200
 
-        gmail_service = GmailService(creds)
+    # create tasks
+    default_tasklist_id = task_service.get_default_tasklist()
 
-        recent_mails = gmail_service.get_recent_emails()
-        print(recent_mails)
+    for mail in dhl_mails:
+        notes = (
+            f"Abholort: {mail['pickup_location']}\n"
+            f"Abholen bis: {mail['due_date']}\n"
+            f"Tracking: {mail['tracking_number']}"
+        )
+        task = task_service.create_task_with_notes(
+            tasklist_id=default_tasklist_id,
+            title="Paket abholen",
+            notes=notes,
+        )
+        print(
+            f"Created task for package with tracking number: {mail['tracking_number']} on {task['due']}"
+        )
 
-        # Return an HTTP response if this is an HTTP-triggered function
-        return "Ok", 200
-
-    except Exception as err:
-        logger.error(f"Failed to access secret version: {err}")
-        return f"Failed to access secret version: {err}", 500
+    return "Ok", 200
 
 
 if __name__ == "__main__":
