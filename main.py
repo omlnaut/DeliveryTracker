@@ -10,8 +10,13 @@ from google.auth.transport.requests import Request
 from TaskService import TaskService
 from gmail_service import GmailService
 
-client = glcoud_logging.Client(project="deliverytracker-442621")
-client.setup_logging()
+environment = os.getenv("ENVIRONMENT", "local")
+
+if environment == "gcp":
+    client = glcoud_logging.Client(project="deliverytracker-442621")
+    client.setup_logging()
+else:
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 
 def _load_credentials() -> Credentials:
@@ -39,7 +44,6 @@ def access_secret_version(request):
     if not dhl_mails:
         nothing_new_msg = "No DHL pickup notifications found"
         logging.info({"message": nothing_new_msg})
-        print(nothing_new_msg)
         return nothing_new_msg, 200
 
     # create tasks
@@ -64,7 +68,6 @@ def access_secret_version(request):
 
         # Convert dictionary to a JSON string before logging
         logging.info(json.dumps(log_data))
-        print(log_data)
 
     return "Ok", 200
 
