@@ -34,7 +34,9 @@ def access_secret_version(request):
     # TODO: change timeframe to something more reasonable
     dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
     if not dhl_mails:
-        return "No DHL pickup notifications found", 200
+        nothing_new_msg = "No DHL pickup notifications found"
+        print(nothing_new_msg)
+        return nothing_new_msg, 200
 
     # create tasks
     default_tasklist_id = task_service.get_default_tasklist()

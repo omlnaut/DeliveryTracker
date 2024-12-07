@@ -6,7 +6,7 @@
             "request": "launch",
             "functionName": "Testi",
             "gen": "GEN_2",
-            "revision": "testi-00006-muc",
+            "revision": "testi-00008-nug",
             "entryPoint": "access_secret_version",
             "testInput": "what",
             "region": "europe-central2",
