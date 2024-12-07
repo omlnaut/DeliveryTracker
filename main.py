@@ -1,5 +1,8 @@
 import json
 import logging
+import os
+import sys
+from google.cloud import logging as glcoud_logging
 from google.cloud import secretmanager
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
@@ -7,8 +10,13 @@ from google.auth.transport.requests import Request
 from TaskService import TaskService
 from gmail_service import GmailService
 
-# Configure the root logger
-logging.basicConfig(level=logging.INFO)
+environment = os.getenv("ENVIRONMENT", "local")
+
+if environment == "gcp":
+    client = glcoud_logging.Client(project="deliverytracker-442621")
+    client.setup_logging()
+else:
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
 
 def _load_credentials() -> Credentials:
@@ -35,7 +43,7 @@ def access_secret_version(request):
     dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
     if not dhl_mails:
         nothing_new_msg = "No DHL pickup notifications found"
-        print(nothing_new_msg)
+        logging.info({"message": nothing_new_msg})
         return nothing_new_msg, 200
 
     # create tasks
@@ -52,9 +60,14 @@ def access_secret_version(request):
             title="Paket abholen",
             notes=notes,
         )
-        print(
-            f"Created task for package with tracking number: {mail['tracking_number']} on {task['due']}"
-        )
+        log_data = {
+            "message": "Created task for package",
+            "tracking_number": mail["tracking_number"],
+            "due": str(task["due"]),
+        }
+
+        # Convert dictionary to a JSON string before logging
+        logging.info(json.dumps(log_data))
 
     return "Ok", 200
 
