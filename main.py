@@ -32,7 +32,7 @@ def access_secret_version(request):
 
     # fetch dhl emails
     # TODO: change timeframe to something more reasonable
-    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(days=14)
+    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
     if not dhl_mails:
         return "No DHL pickup notifications found", 200
 

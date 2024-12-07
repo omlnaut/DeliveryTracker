@@ -96,7 +96,7 @@ class GmailService:
             print(f"Error fetching emails: {str(e)}")
             return []
 
-    def get_amazon_dhl_pickup_emails(self, days=2):
+    def get_amazon_dhl_pickup_emails(self, hours=1):
         """
         Fetch Amazon DHL pickup notification emails from the last specified days.
 
@@ -111,7 +111,7 @@ class GmailService:
             self.authenticate()
 
         # Calculate time threshold
-        time_threshold = datetime.now(timezone.utc) - timedelta(days=days)
+        time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
         query = (
             f"from:order-update@amazon.de "
             f'subject:"Ihr Paket kann bei DHL abgeholt werden" '
