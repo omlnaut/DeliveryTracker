@@ -10,8 +10,11 @@ from google.auth.transport.requests import Request
 from TaskService import TaskService
 from gmail_service import GmailService
 
-client = glcoud_logging.Client(project="deliverytracker-442621")
-client.setup_logging()
+if os.environ.get("ENVIRONMENT") == "development":
+    logging.basicConfig(level=logging.INFO)
+else:
+    client = glcoud_logging.Client(project="deliverytracker-442621")
+    client.setup_logging()
 
 
 def _load_credentials() -> Credentials:
