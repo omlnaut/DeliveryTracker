@@ -34,7 +34,9 @@ class GmailService:
 
     def authenticate(self):
         """Authenticate with Gmail API."""
-        self.service = build("gmail", "v1", credentials=self.credentials)
+        self.service = build(
+            "gmail", "v1", credentials=self.credentials, cache_discovery=False
+        )
 
     def get_recent_emails(self, days=2):
         """

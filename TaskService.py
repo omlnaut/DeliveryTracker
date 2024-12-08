@@ -5,7 +5,9 @@ from googleapiclient.discovery import build
 class TaskService:
     def __init__(self, credentials):
         self.credentials = credentials
-        self.service = build("tasks", "v1", credentials=credentials)
+        self.service = build(
+            "tasks", "v1", credentials=credentials, cache_discovery=False
+        )
 
     def get_default_tasklist(self):
         """Gets the default task list ID."""
