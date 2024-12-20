@@ -5,3 +5,4 @@ __pycache__/
 logged_in_credentials.json
 
 .python_packages
+.env

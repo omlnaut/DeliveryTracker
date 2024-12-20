@@ -15,7 +15,8 @@
 			"extensions": [
 				"ms-python.black-formatter",
 				"ms-python.python",
-				"ms-vscode.vscode-node-azure-pack"
+				"ms-vscode.vscode-node-azure-pack",
+				"ms-toolsai.jupyter"
 			]
 		}
 	}
