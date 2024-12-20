@@ -3,3 +3,5 @@ token_tasks.pickle
 gmail_token.pickle
 __pycache__/
 logged_in_credentials.json
+
+.python_packages
