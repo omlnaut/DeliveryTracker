@@ -26,7 +26,7 @@ def _load_credentials() -> Credentials:
 
 
 @app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=True)
-def http_to_log(req: func.HttpRequest):
+def http_to_log(mytimer: func.TimerRequest):
     credentials = _load_credentials()
     gmail_service = GmailService(credentials)
     task_service = TaskService(credentials)
@@ -35,7 +35,7 @@ def http_to_log(req: func.HttpRequest):
     if not dhl_mails:
         nothing_new_msg = "No DHL pickup notifications found"
         logging.info({"message": nothing_new_msg})
-        return func.HttpResponse(nothing_new_msg)
+        return
 
     # create tasks
     default_tasklist_id = task_service.get_default_tasklist()

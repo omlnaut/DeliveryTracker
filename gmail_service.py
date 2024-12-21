@@ -255,15 +255,3 @@ class GmailService:
         except Exception as e:
             print(f"Error fetching emails: {str(e)}")
             return []
-
-
-# Usage example:
-if __name__ == "__main__":
-    gmail = GmailService()
-    pickup_emails = gmail.get_amazon_dhl_pickup_emails()
-    print(f"Found {len(pickup_emails)} DHL pickup notifications:")
-    for email in pickup_emails:
-        print(f"Location: {email['pickup_location']}")
-        print(f"Due Date: {email['due_date']}")
-        print(f"Tracking: {email['tracking_number']}")
-        print("-" * 50)

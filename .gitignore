@@ -6,3 +6,5 @@ logged_in_credentials.json
 
 .python_packages
 .env
+__azurite*
+__blobstorage__

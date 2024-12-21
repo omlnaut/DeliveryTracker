@@ -42,7 +42,7 @@ def access_secret_version(request):
     if not dhl_mails:
         nothing_new_msg = "No DHL pickup notifications found"
         logging.info({"message": nothing_new_msg})
-        return nothing_new_msg, 200
+        return
 
     # create tasks
     default_tasklist_id = task_service.get_default_tasklist()
@@ -67,7 +67,7 @@ def access_secret_version(request):
         # Convert dictionary to a JSON string before logging
         logging.info(json.dumps(log_data))
 
-    return "Ok", 200
+    return
 
 
 if __name__ == "__main__":
