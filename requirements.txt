@@ -5,3 +5,6 @@
 azure-functions
 azure-identity
 azure-keyvault-secrets
+google-auth-oauthlib
+google-api-python-client
+beautifulsoup4

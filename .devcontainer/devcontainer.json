@@ -18,7 +18,11 @@
 				"ms-python.python",
 				"ms-vscode.vscode-node-azure-pack",
 				"ms-toolsai.jupyter"
-			]
+			],
+			"settings": {
+				"python.defaultInterpreterPath": "/usr/local/bin/python",
+				"python.pythonPath": "/usr/local/bin/python"
+			}
 		}
 	}
 	// Features to add to the dev container. More info: https://containers.dev/features.
