@@ -25,13 +25,13 @@ def _load_credentials() -> Credentials:
     return Credentials.from_authorized_user_info(credentials_info)
 
 
-@app.route(route="http_to_log")
-def http_to_log(req: func.HttpRequest) -> func.HttpResponse:
+@app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=True)
+def http_to_log(req: func.HttpRequest):
     credentials = _load_credentials()
     gmail_service = GmailService(credentials)
     task_service = TaskService(credentials)
 
-    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=24)
+    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
     if not dhl_mails:
         nothing_new_msg = "No DHL pickup notifications found"
         logging.info({"message": nothing_new_msg})
@@ -59,8 +59,6 @@ def http_to_log(req: func.HttpRequest) -> func.HttpResponse:
 
         # Convert dictionary to a JSON string before logging
         logging.info(json.dumps(log_data))
-
-    return func.HttpResponse(str(log_data))
 
 
 @app.route(route="get_secret")
