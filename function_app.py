@@ -85,3 +85,11 @@ def event_trigger_testi(
     )
 
     return func.HttpResponse("yay")
+
+
+@app.event_grid_trigger(
+    arg_name="azeventgrid",
+)
+def EventGridTriggerTesti(azeventgrid: func.EventGridEvent):
+    logging.info("Python EventGrid trigger processed an event")
+    logging.info(azeventgrid.get_json())
