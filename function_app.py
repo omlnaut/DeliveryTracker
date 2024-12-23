@@ -62,6 +62,7 @@ def http_to_log(mytimer: func.TimerRequest):
         logging.info(json.dumps(log_data))
 
 
+@app.function_name(name="event_trigger_testi")
 @app.route(route="event_trigger_testi")
 @app.event_grid_output(
     arg_name="output",
