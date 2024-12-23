@@ -1,3 +1,4 @@
+import datetime
 import json
 import azure.functions as func
 import logging
@@ -25,7 +26,7 @@ def _load_credentials() -> Credentials:
     return Credentials.from_authorized_user_info(credentials_info)
 
 
-@app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=True)
+@app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=False)
 def http_to_log(mytimer: func.TimerRequest):
     credentials = _load_credentials()
     gmail_service = GmailService(credentials)
@@ -61,26 +62,26 @@ def http_to_log(mytimer: func.TimerRequest):
         logging.info(json.dumps(log_data))
 
 
-@app.route(route="get_secret")
-def get_secret(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("Python HTTP trigger function processed a request.")
-
-    # The URL of your Key Vault
-    key_vault_url = "https://omlnaut-vaultier.vault.azure.net/"
-    secret_name = "mysecret"  # The name of your secret in Key Vault
-
-    # Create a secret client using the DefaultAzureCredential
-    credential = DefaultAzureCredential()
-    secret_client = SecretClient(vault_url=key_vault_url, credential=credential)
-
-    try:
-        # Retrieve the secret value
-        secret = secret_client.get_secret(secret_name)
-        logging.info(f"Retrieved secret value: {secret.value}")
-        return func.HttpResponse(
-            f"The secret value is: {secret.value}", status_code=200
+@app.route(route="event_trigger_testi")
+@app.event_grid_output(
+    arg_name="output",
+    event_name="event_trigger_testi",
+    topic_endpoint_uri="EVENT_GRID_TOPIC_ENDPOINT_URI",
+    topic_key_setting="EVENT_GRID_KEY",
+)
+def event_trigger_testi(
+    req: func.HttpRequest, output: func.Out[func.EventGridOutputEvent]
+) -> func.HttpResponse:
+    logging.info("Python event trigger function processed a request.")
+    output.set(
+        func.EventGridOutputEvent(
+            id="test-id",
+            data={"tag1": "value1", "tag2": "value2"},
+            subject="test-subject",
+            event_type="test-event-1",
+            event_time=datetime.datetime.now(),
+            data_version="1.0",
         )
-    except Exception as e:
-        logging.error("Failed to retrieve the secret.")
-        logging.error(str(e))
-        return func.HttpResponse("Error retrieving secret.", status_code=500)
+    )
+
+    return func.HttpResponse("yay")
