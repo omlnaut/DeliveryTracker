@@ -8,3 +8,4 @@ logged_in_credentials.json
 .env
 __azurite*
 __blobstorage__
+local.settings.json

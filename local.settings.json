@@ -1,9 +1,0 @@
-{
-  "IsEncrypted": false,
-  "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "python",
-    "EVENT_GRID_KEY": "6mGmMs95iORCF6Di0YgxmGFMKJhDjN1YrV3BAyYj50QZOGIOvdU5JQQJ99ALACPV0roXJ3w3AAABAZEGlJk6",
-    "EVENT_GRID_TOPIC_ENDPOINT_URI": "https://eventtesti.germanywestcentral-1.eventgrid.azure.net/api/events"
-  }
-}
