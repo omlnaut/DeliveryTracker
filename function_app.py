@@ -5,6 +5,8 @@ import logging
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
+import DeliveryTesti.DeliveryTracker as DeliveryTracker
+
 
 @app.function_name(name="event_trigger_testi")
 @app.route(route="event_trigger_testi")

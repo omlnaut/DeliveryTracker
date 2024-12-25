@@ -4,11 +4,11 @@ from google.oauth2.credentials import Credentials
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-from .gmail_service import GmailService
+from .GmailService import GmailService
 from .TaskService import TaskService
 
 import azure.functions as func
-from ..function_app import app
+from function_app import app
 
 
 def _load_credentials() -> Credentials:
