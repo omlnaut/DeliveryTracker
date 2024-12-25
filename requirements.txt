@@ -8,3 +8,4 @@ azure-keyvault-secrets
 google-auth-oauthlib
 google-api-python-client
 beautifulsoup4
+python-telegram-bot
