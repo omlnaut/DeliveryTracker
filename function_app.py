@@ -5,7 +5,8 @@ import logging
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-import DeliveryTesti.DeliveryTracker as DeliveryTracker
+import DeliveryTesti.DeliveryTracker
+import Infrastructure.Telegram
 
 
 @app.function_name(name="event_trigger_testi")
