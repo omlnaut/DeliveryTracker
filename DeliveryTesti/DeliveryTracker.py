@@ -1,14 +1,14 @@
 import json
 import logging
+
 from google.oauth2.credentials import Credentials
+
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-
-from .GmailService import GmailService
-from .TaskService import TaskService
-
 import azure.functions as func
+
 from function_app import app
+from shared.GoogleServices import GmailService, TaskService
 
 
 def _load_credentials() -> Credentials:
