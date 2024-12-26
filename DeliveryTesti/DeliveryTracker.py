@@ -9,23 +9,18 @@ import azure.functions as func
 
 from function_app import app
 from shared.GoogleServices import GmailService, TaskService
+from shared.AzureHelper import get_secret
 
 
 def _load_credentials() -> Credentials:
-    key_vault_url = "https://omlnaut-vaultier.vault.azure.net/"
-    secret_name = "GcloudCredentials"  # The name of your secret in Key Vault
+    secret_str = get_secret("GcloudCredentials")
 
-    # Create a secret client using the DefaultAzureCredential
-    credential = DefaultAzureCredential()
-    secret_client = SecretClient(vault_url=key_vault_url, credential=credential)
-
-    secret_str = secret_client.get_secret(secret_name).value
     credentials_info = json.loads(secret_str)  # type: ignore
 
     return Credentials.from_authorized_user_info(credentials_info)
 
 
-@app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=False)
+@app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=True)
 def http_to_log(mytimer: func.TimerRequest):
     credentials = _load_credentials()
     gmail_service = GmailService(credentials)
