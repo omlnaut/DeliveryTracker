@@ -13,13 +13,17 @@ def _load_token() -> str:
     return get_secret("TelegramBotToken")
 
 
+def send_telegram_output(arg_name="output"):
+    return app.event_grid_output(
+        arg_name=arg_name,
+        event_name="send_telegram_message",
+        topic_endpoint_uri="SENDTELEGRAMMESSAGE_EVENT_GRID_URI",
+        topic_key_setting="SENDTELEGRAMMESSAGE_EVENT_GRID_KEY",
+    )
+
+
 @app.route(route="test_send_telegram_message")
-@app.event_grid_output(
-    arg_name="output",
-    event_name="test_send_telegram_message",
-    topic_endpoint_uri="SENDTELEGRAMMESSAGE_EVENT_GRID_URI",
-    topic_key_setting="SENDTELEGRAMMESSAGE_EVENT_GRID_KEY",
-)
+@send_telegram_output()
 def test_send_telegram_message(
     req: func.HttpRequest, output: func.Out[func.EventGridOutputEvent]
 ) -> func.HttpResponse:
