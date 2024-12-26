@@ -1,4 +1,5 @@
 import datetime
+import uuid
 
 import telegram
 from function_app import app
@@ -13,7 +14,7 @@ def _load_token() -> str:
     return get_secret("TelegramBotToken")
 
 
-def send_telegram_output(arg_name="output"):
+def telegram_output_binding(arg_name="output"):
     return app.event_grid_output(
         arg_name=arg_name,
         event_name="send_telegram_message",
@@ -22,22 +23,26 @@ def send_telegram_output(arg_name="output"):
     )
 
 
+def create_telegram_output_event(
+    message: str, subject: str = "send_telegram_message"
+) -> func.EventGridOutputEvent:
+    return func.EventGridOutputEvent(
+        id=str(uuid.uuid4()),
+        data={"message": message},
+        subject=subject,
+        event_type="send_telegram_message_event",
+        event_time=datetime.datetime.now(),
+        data_version="1.0",
+    )
+
+
 @app.route(route="test_send_telegram_message")
-@send_telegram_output()
+@telegram_output_binding()
 def test_send_telegram_message(
     req: func.HttpRequest, output: func.Out[func.EventGridOutputEvent]
 ) -> func.HttpResponse:
     logging.info("Python event trigger function processed a request.")
-    output.set(
-        func.EventGridOutputEvent(
-            id="test-id",
-            data={"message": "hello there testi"},
-            subject="test-subject",
-            event_type="test-event-1",
-            event_time=datetime.datetime.now(),
-            data_version="1.0",
-        )
-    )
+    output.set(create_telegram_output_event(message="hello there testi"))
 
     return func.HttpResponse("yay")
 
