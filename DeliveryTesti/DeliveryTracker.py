@@ -3,8 +3,6 @@ import logging
 
 from google.oauth2.credentials import Credentials
 
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
 import azure.functions as func
 
 from function_app import app

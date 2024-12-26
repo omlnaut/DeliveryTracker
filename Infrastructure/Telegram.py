@@ -4,22 +4,13 @@ import telegram
 from function_app import app
 
 import azure.functions as func
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
 import logging
+
+from shared.AzureHelper.secrets import get_secret
 
 
 def _load_token() -> str:
-    key_vault_url = "https://omlnaut-vaultier.vault.azure.net/"
-    secret_name = "TelegramBotToken"  # The name of your secret in Key Vault
-
-    # Create a secret client using the DefaultAzureCredential
-    credential = DefaultAzureCredential()
-    secret_client = SecretClient(vault_url=key_vault_url, credential=credential)
-
-    token = secret_client.get_secret(secret_name).value or ""
-
-    return token
+    return get_secret("TelegramBotToken")
 
 
 @app.function_name(name="TestSendTelegramMessage")
