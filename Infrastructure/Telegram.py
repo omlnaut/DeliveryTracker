@@ -13,15 +13,14 @@ def _load_token() -> str:
     return get_secret("TelegramBotToken")
 
 
-@app.function_name(name="TestSendTelegramMessage")
-@app.route(route="TestSendTelegramMessage")
+@app.route(route="test_send_telegram_message")
 @app.event_grid_output(
     arg_name="output",
-    event_name="TestSendTelegramMessage",
+    event_name="test_send_telegram_message",
     topic_endpoint_uri="SENDTELEGRAMMESSAGE_EVENT_GRID_URI",
     topic_key_setting="SENDTELEGRAMMESSAGE_EVENT_GRID_KEY",
 )
-def TestSendTelegramMessage(
+def test_send_telegram_message(
     req: func.HttpRequest, output: func.Out[func.EventGridOutputEvent]
 ) -> func.HttpResponse:
     logging.info("Python event trigger function processed a request.")
@@ -40,7 +39,7 @@ def TestSendTelegramMessage(
 
 
 @app.event_grid_trigger(arg_name="azeventgrid")
-async def SendTelegramMessage(azeventgrid: func.EventGridEvent):
+async def send_telegram_message(azeventgrid: func.EventGridEvent):
     logging.info("Python EventGrid trigger processed an event")
     data = azeventgrid.get_json()
     msg = data["message"]
