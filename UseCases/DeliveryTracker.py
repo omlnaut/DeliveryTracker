@@ -5,6 +5,10 @@ from google.oauth2.credentials import Credentials
 
 import azure.functions as func
 
+from Infrastructure.telegram.azure_helper import (
+    create_telegram_output_event,
+    telegram_output_binding,
+)
 from function_app import app
 from shared.GoogleServices import GmailService, TaskService
 from shared.AzureHelper import get_secret
@@ -19,7 +23,10 @@ def _load_credentials() -> Credentials:
 
 
 @app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=False)
-def dhl_mail_to_task(mytimer: func.TimerRequest):
+@telegram_output_binding()
+def dhl_mail_to_task(
+    mytimer: func.TimerRequest, output: func.Out[func.EventGridOutputEvent]
+):
     credentials = _load_credentials()
     gmail_service = GmailService(credentials)
     task_service = TaskService(credentials)
@@ -49,6 +56,13 @@ def dhl_mail_to_task(mytimer: func.TimerRequest):
             "tracking_number": mail["tracking_number"],
             "due": str(task["due"]),
         }
+
+        output.set(
+            create_telegram_output_event(
+                message=log_data["message"],
+                subject="dhl_mail_to_task",
+            )
+        )
 
         # Convert dictionary to a JSON string before logging
         logging.info(json.dumps(log_data))
