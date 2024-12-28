@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging
 
@@ -22,7 +23,7 @@ def _load_credentials() -> Credentials:
     return Credentials.from_authorized_user_info(credentials_info)
 
 
-@app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=False)
+@app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=True)
 @telegram_output_binding()
 def dhl_mail_to_task(
     mytimer: func.TimerRequest, output: func.Out[func.EventGridOutputEvent]
@@ -31,7 +32,7 @@ def dhl_mail_to_task(
     gmail_service = GmailService(credentials)
     task_service = TaskService(credentials)
 
-    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
+    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=6)
     if not dhl_mails:
         nothing_new_msg = "No DHL pickup notifications found"
         logging.info({"message": nothing_new_msg})
@@ -51,18 +52,19 @@ def dhl_mail_to_task(
             title="Paket abholen",
             notes=notes,
         )
+        task_date_str: str = task["due"].split("T")[0]
+
         log_data = {
             "message": "Created task for package",
             "tracking_number": mail["tracking_number"],
-            "due": str(task["due"]),
+            "due": task_date_str,
         }
 
         output.set(
             create_telegram_output_event(
-                message=log_data["message"],
+                message=f"Created Task: Paket abholen ({task_date_str})",
                 subject="dhl_mail_to_task",
             )
         )
 
-        # Convert dictionary to a JSON string before logging
         logging.info(json.dumps(log_data))
