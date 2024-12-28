@@ -6,6 +6,10 @@ from google.oauth2.credentials import Credentials
 
 import azure.functions as func
 
+from Infrastructure.google_task.azure_helper import (
+    create_task_output_event,
+    task_output_binding,
+)
 from Infrastructure.telegram.azure_helper import (
     create_telegram_output_event,
     telegram_output_binding,
@@ -24,22 +28,21 @@ def _load_credentials() -> Credentials:
 
 
 @app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=False)
-@telegram_output_binding()
+@task_output_binding()
 def dhl_mail_to_task(
-    mytimer: func.TimerRequest, output: func.Out[func.EventGridOutputEvent]
+    mytimer: func.TimerRequest,
+    taskOutput: func.Out[func.EventGridOutputEvent],
 ):
     credentials = _load_credentials()
     gmail_service = GmailService(credentials)
-    task_service = TaskService(credentials)
 
-    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=6)
+    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
     if not dhl_mails:
         nothing_new_msg = "No DHL pickup notifications found"
         logging.info({"message": nothing_new_msg})
         return
 
-    # create tasks
-    default_tasklist_id = task_service.get_default_tasklist()
+    logging.info(f"Found {len(dhl_mails)} DHL pickup notifications")
 
     for mail in dhl_mails:
         notes = (
@@ -47,24 +50,4 @@ def dhl_mail_to_task(
             f"Abholen bis: {mail['due_date']}\n"
             f"Tracking: {mail['tracking_number']}"
         )
-        task = task_service.create_task_with_notes(
-            tasklist_id=default_tasklist_id,
-            title="Paket abholen",
-            notes=notes,
-        )
-        task_date_str: str = task["due"].split("T")[0]
-
-        log_data = {
-            "message": "Created task for package",
-            "tracking_number": mail["tracking_number"],
-            "due": task_date_str,
-        }
-
-        output.set(
-            create_telegram_output_event(
-                message=f"Created Task: Paket abholen ({task_date_str})",
-                subject="dhl_mail_to_task",
-            )
-        )
-
-        logging.info(json.dumps(log_data))
+        taskOutput.set(create_task_output_event(title="Paket abholen", notes=notes))

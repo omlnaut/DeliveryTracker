@@ -5,7 +5,7 @@ import uuid
 import azure.functions as func
 
 
-def telegram_output_binding(arg_name="output"):
+def telegram_output_binding(arg_name="telegramOutput"):
     return app.event_grid_output(
         arg_name=arg_name,
         event_name="send_telegram_message",
