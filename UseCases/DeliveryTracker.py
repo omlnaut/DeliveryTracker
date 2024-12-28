@@ -26,13 +26,13 @@ def _load_credentials() -> Credentials:
 @app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=False)
 @telegram_output_binding()
 def dhl_mail_to_task(
-    mytimer: func.TimerRequest, output: func.Out[func.EventGridOutputEvent]
+    mytimer: func.TimerRequest, telegramOutput: func.Out[func.EventGridOutputEvent]
 ):
     credentials = _load_credentials()
     gmail_service = GmailService(credentials)
     task_service = TaskService(credentials)
 
-    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=6)
+    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
     if not dhl_mails:
         nothing_new_msg = "No DHL pickup notifications found"
         logging.info({"message": nothing_new_msg})
@@ -60,7 +60,7 @@ def dhl_mail_to_task(
             "due": task_date_str,
         }
 
-        output.set(
+        telegramOutput.set(
             create_telegram_output_event(
                 message=f"Created Task: Paket abholen ({task_date_str})",
                 subject="dhl_mail_to_task",
