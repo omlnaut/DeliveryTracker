@@ -1,5 +1,10 @@
 import logging
-from .azure_helper import task_output_binding, create_task_output_event, app
+from .azure_helper import (
+    TaskListType,
+    task_output_binding,
+    create_task_output_event,
+    app,
+)
 from Infrastructure.telegram.azure_helper import (
     create_telegram_output_event,
     telegram_output_binding,
@@ -27,7 +32,11 @@ def test_create_task(
     req: func.HttpRequest, taskOutput: func.Out[func.EventGridOutputEvent]
 ):
     logging.info("Python event trigger function processed a request.")
-    taskOutput.set(create_task_output_event(title="test title", notes="test notes"))
+    taskOutput.set(
+        create_task_output_event(
+            title="test title", notes="test notes", tasklist=TaskListType.MANGA
+        )
+    )
 
     return func.HttpResponse("yay")
 
@@ -41,12 +50,12 @@ async def create_task(
     data = azeventgrid.get_json()
     notes = data["notes"]
     title = data["title"]
+    task_list = data["tasklist"]
 
     task_service = TaskService(_load_credentials())
 
-    default_tasklist_id = task_service.get_default_tasklist()
     task = task_service.create_task_with_notes(
-        tasklist_id=default_tasklist_id,
+        tasklist_id=task_list,
         title=title,
         notes=notes,
     )
@@ -54,6 +63,10 @@ async def create_task(
     logging.info(f"Task created: {task}")
 
     task_date_str: str = task["due"].split("T")[0]
+    task_list_type = TaskListType(task_list)
+    task_list_name = task_list_type.name
     telegramOutput.set(
-        create_telegram_output_event(message=f"Task created: {title} ({task_date_str})")
+        create_telegram_output_event(
+            message=f"Task created in {task_list_name}: {title} ({task_date_str})"
+        )
     )
