@@ -14,10 +14,20 @@ def task_output_binding(arg_name="taskOutput"):
     )
 
 
-def create_task_output_event(title: str, notes: str = "") -> func.EventGridOutputEvent:
+from enum import Enum
+
+
+class TaskListType(Enum):
+    DEFAULT = "MDY0Mzc2NjgyMDc4MTc0Nzg3Mjk6MDow"
+    MANGA = "WFRzM0JfdkdTXzl4WHVHNw"
+
+
+def create_task_output_event(
+    title: str, notes: str = "", tasklist: TaskListType = TaskListType.DEFAULT
+) -> func.EventGridOutputEvent:
     return func.EventGridOutputEvent(
         id=str(uuid.uuid4()),
-        data={"title": title, "notes": notes},
+        data={"title": title, "notes": notes, "tasklist": tasklist.value},
         subject="create_task_event",
         event_type="create_task_event",
         event_time=datetime.datetime.now(),
