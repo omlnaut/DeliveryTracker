@@ -1,9 +1,13 @@
 # Mangas
 ## Reaper Scans
-Solo Leveling Ragnarok
+- Solo Leveling Ragnarok
+- Level up with skills
+- Infinite Mage
 
+## Flame Comics
+- Omniscient Readers Viewpoint
+- Auto hunting
 
-Omniscient Readers Viewpoint
-Level up with skills
-Auto hunting
-Infinite Mage
+## Demonicscans
+- Skeleton Soldier
+
