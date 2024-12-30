@@ -45,7 +45,7 @@ def skeleton_soldier_update(
     if chapter_number:
         taskOutput.set(
             create_task_output_event(
-                title=f"Skeleton Solder {chapter_number}",
+                title=f"Skeleton Soldier {chapter_number}",
                 notes=url,
                 tasklist=TaskListType.MANGA,
             )
