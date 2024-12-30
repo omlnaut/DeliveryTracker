@@ -1,4 +1,3 @@
-from datetime import datetime
 import json
 import logging
 
@@ -10,12 +9,8 @@ from Infrastructure.google_task.azure_helper import (
     create_task_output_event,
     task_output_binding,
 )
-from Infrastructure.telegram.azure_helper import (
-    create_telegram_output_event,
-    telegram_output_binding,
-)
 from function_app import app
-from shared.GoogleServices import GmailService, TaskService
+from shared.GoogleServices import GmailService
 from shared.AzureHelper import get_secret
 
 
