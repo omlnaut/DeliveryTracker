@@ -18,10 +18,10 @@ def _load_token() -> str:
 @app.route(route="test_send_telegram_message")
 @telegram_output_binding()
 def test_send_telegram_message(
-    req: func.HttpRequest, output: func.Out[func.EventGridOutputEvent]
+    req: func.HttpRequest, telegramOutput: func.Out[func.EventGridOutputEvent]
 ) -> func.HttpResponse:
     logging.info("Python event trigger function processed a request.")
-    output.set(create_telegram_output_event(message="hello there testi"))
+    telegramOutput.set(create_telegram_output_event(message="hello there testi"))
 
     return func.HttpResponse("yay")
 
