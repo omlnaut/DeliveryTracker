@@ -28,6 +28,7 @@ class GmailService:
 
     def authenticate(self):
         """Authenticate with Gmail API."""
+        # TODO figure out the type of the service
         self.service = build(
             "gmail", "v1", credentials=self.credentials, cache_discovery=False
         )
