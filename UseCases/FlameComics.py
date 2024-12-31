@@ -63,7 +63,7 @@ def _has_chapter_for_today(series_id: int) -> str | None:
     return None
 
 
-@app.timer_trigger(schedule="7 6 * * *", arg_name="mytimer", run_on_startup=True)
+@app.timer_trigger(schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False)
 @task_output_binding()
 def flame_comics_update(
     mytimer: func.TimerRequest,
