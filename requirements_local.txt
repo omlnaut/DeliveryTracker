@@ -2,3 +2,5 @@
 
 python-dotenv
 ipykernel
+pytest
+pytest-cov

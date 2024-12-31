@@ -9,3 +9,4 @@ logged_in_credentials.json
 __azurite*
 __blobstorage__
 local.settings.json
+.coverage
