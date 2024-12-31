@@ -10,6 +10,7 @@ from Infrastructure.google_task.azure_helper import (
 )
 import azure.functions as func
 from function_app import app
+from shared.date_utils import is_at_most_one_day_old
 
 
 @dataclass
@@ -59,10 +60,9 @@ def _get_latest_update_date(series_id: int) -> tuple[date, str]:
 
 
 def _get_chapter_for_today(series_id: int) -> str | None:
-    today = datetime.today().date()
     (date, chapter_name) = _get_latest_update_date(series_id)
 
-    if date == today:
+    if is_at_most_one_day_old(date):
         return chapter_name
     else:
         return None

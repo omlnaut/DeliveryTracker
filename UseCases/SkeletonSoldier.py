@@ -12,11 +12,11 @@ from Infrastructure.google_task.azure_helper import (
     task_output_binding,
 )
 from function_app import app
+from shared.date_utils import is_at_most_one_day_old
 
 
 def _has_chapter_for_today(html) -> str | None:
     """Return True if a chapter with today's date is found."""
-    today = datetime.now().date()
     soup = BeautifulSoup(html, "html.parser")
     chapters_list = soup.find("div", {"id": "chapters-list"})
     chapter_links = chapters_list.find_all("a", class_="chplinks")  # type: ignore
@@ -25,7 +25,7 @@ def _has_chapter_for_today(html) -> str | None:
         if span:
             date_text = span.get_text(strip=True)
             date_obj = datetime.strptime(date_text, "%Y-%m-%d").date()
-            if date_obj == today:
+            if is_at_most_one_day_old(date_obj):
                 chapter_number = link.get_text().split("\n")[1].strip()
                 return chapter_number
     return None
