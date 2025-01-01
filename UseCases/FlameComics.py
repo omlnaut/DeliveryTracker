@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 import json
 from dataclasses import dataclass
+from fp.fp import FreeProxy
 
 from bs4 import BeautifulSoup
 import requests
@@ -28,6 +29,18 @@ _manga_ids = [
 ]
 
 
+def _fetch_with_proxy(url: str, headers: dict) -> requests.Response:
+    for _ in range(3):
+        proxy = FreeProxy().get()
+        response = requests.get(url, headers=headers, proxies={"http": proxy})
+
+        if response.status_code == 200:
+            logging.info(f"Successfully fetched with proxy: {url}")
+            return response
+
+    raise Exception(f"Failed to fetch with proxy: {url}")
+
+
 def _has_chapter_for_today(series_id: int) -> str | None:
     """Check if there is a new chapter today for the given series ID.
 
@@ -37,7 +50,7 @@ def _has_chapter_for_today(series_id: int) -> str | None:
     Returns:
         The chapter number if there is an update today, None otherwise
     """
-    url = f"https://flamecomics.xyz/series/{series_id}"
+    url = f"http://flamecomics.xyz/series/{series_id}"
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "accept-language": "de-DE,de;q=0.9,en-US;q=0.8,en-DE;q=0.7,en;q=0.6",
@@ -54,7 +67,7 @@ def _has_chapter_for_today(series_id: int) -> str | None:
         "upgrade-insecure-requests": "1",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     }
-    response = requests.get(url, headers=headers)
+    response = _fetch_with_proxy(url, headers)
     html = response.content.decode()
 
     soup = BeautifulSoup(html, "html.parser")
@@ -63,6 +76,7 @@ def _has_chapter_for_today(series_id: int) -> str | None:
     )
     if not script or not script.contents:
         logging.warning(f"Could not find Next.js data for series {series_id}")
+        logging.warning(html)
         return None
 
     data = json.loads(script.contents[0])
