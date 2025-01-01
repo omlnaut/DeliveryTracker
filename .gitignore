@@ -10,3 +10,4 @@ __azurite*
 __blobstorage__
 local.settings.json
 .coverage
+UseCases/MangaUpdate/openapi.yaml
