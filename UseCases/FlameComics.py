@@ -38,7 +38,23 @@ def _has_chapter_for_today(series_id: int) -> str | None:
         The chapter number if there is an update today, None otherwise
     """
     url = f"https://flamecomics.xyz/series/{series_id}"
-    response = requests.get(url)
+    headers = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "accept-language": "de-DE,de;q=0.9,en-US;q=0.8,en-DE;q=0.7,en;q=0.6",
+        "cookie": "cf_clearance=xBO_P87WodUZXV.8QsJFjQCXHRPclu9bMNxBDVCSkkk-1735678421-1.2.1.1-qHhrc1y.k2AOZwDmPKRgrfKsfQflpOU5RAT3345qHh239Cu.NbvwkpWNYJEo03rgXkvcZ5fhYqnVVuB6dOHj9uQ3HHuWkKfsAsxbka0Bbpub9Qg4xCFgBfOZPV_.50DYiGdsS1hVab7_WMqWe.z9fdu7ubdwl_L9.BvIWR0f_NjNzYgpNunC8YCH1W_ghtX3V_ZefHDeea30HQ23nqGhQWVSTZx7dK_Gks8IwGo9mPQSNjqgxnei9DmvKeVtIZIbEsZ5BIl2MwZ7twi6.B5.7IRzaggNy6_k5Wu8dF2rcfAQvjBzWpFhYuH3R5qGElyOuGWGScVQE3d22q7.D_Ukwd63yHoZA32w0euMRH581Y_zS9q7_ixubTnO_LcwNrvxUGQ.bRWNd5c3Kb6ViOvx5g",
+        "dnt": "1",
+        "priority": "u=0, i",
+        "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "none",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    }
+    response = requests.get(url, headers=headers)
     html = response.content.decode()
 
     soup = BeautifulSoup(html, "html.parser")
@@ -63,7 +79,7 @@ def _has_chapter_for_today(series_id: int) -> str | None:
     return None
 
 
-@app.timer_trigger(schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False)
+@app.timer_trigger(schedule="7 6 * * *", arg_name="mytimer", run_on_startup=True)
 @task_output_binding()
 def flame_comics_update(
     mytimer: func.TimerRequest,
