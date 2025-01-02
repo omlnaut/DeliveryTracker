@@ -10,6 +10,7 @@ class MangaPublisher(Enum):
 
     FLAMECOMICS = 57949066600
     REAPERSCANS = 11782777312
+    MANGAPLUS = 49204242348
 
 
 @dataclass

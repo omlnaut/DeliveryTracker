@@ -45,6 +45,12 @@ mangas = [
         series_id=32357730076,
         publisher=MangaPublisher.REAPERSCANS,
     ),
+    MangaUpdateManga(
+        title="One Piece",
+        url="https://mangaplus.shueisha.co.jp/titles/100020",
+        series_id=55099564912,
+        publisher=MangaPublisher.MANGAPLUS,
+    ),
 ]
 
 
