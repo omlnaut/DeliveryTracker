@@ -1,1 +1,1 @@
-from .MangaUpdateFunction import test_mangaupdate
+from .MangaUpdateFunction import manga_update
