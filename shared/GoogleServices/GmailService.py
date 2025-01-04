@@ -52,7 +52,7 @@ class GmailService:
 
         try:
             results = (
-                self.service.users().messages().list(userId="me", q=query).execute()
+                self.service.users().messages().list(userId="me", q=query).execute()  # type: ignore
             )
 
             messages = results.get("messages", [])
@@ -60,7 +60,7 @@ class GmailService:
 
             for message in messages:
                 msg_details = (
-                    self.service.users()
+                    self.service.users()  # type: ignore
                     .messages()
                     .get(
                         userId="me",
@@ -117,7 +117,7 @@ class GmailService:
 
         try:
             results = (
-                self.service.users().messages().list(userId="me", q=query).execute()
+                self.service.users().messages().list(userId="me", q=query).execute()  # type: ignore
             )
 
             messages = results.get("messages", [])
@@ -126,7 +126,7 @@ class GmailService:
             for message in messages:
                 # Get the full message content
                 msg_details = (
-                    self.service.users()
+                    self.service.users()  # type: ignore
                     .messages()
                     .get(userId="me", id=message["id"], format="full")
                     .execute()
@@ -200,9 +200,9 @@ class GmailService:
                     day_str = due_date_match.group(2).strip()  # e.g., "30. November"
                     try:
                         # Parse the German date manually
-                        day = int(re.search(r"(\d+)\.", day_str).group(1))
+                        day = int(re.search(r"(\d+)\.", day_str).group(1))  # type: ignore
                         month_name = (
-                            re.search(r"\d+\.\s*(\w+)", day_str).group(1).strip()
+                            re.search(r"\d+\.\s*(\w+)", day_str).group(1).strip()  # type: ignore
                         )
                         month = GERMAN_MONTHS.get(month_name)
 

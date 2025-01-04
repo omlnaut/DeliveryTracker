@@ -11,6 +11,10 @@ from Infrastructure.google_task.azure_helper import (
     create_task_output_event,
     task_output_binding,
 )
+from Infrastructure.telegram.azure_helper import (
+    create_telegram_output_event,
+    telegram_output_binding,
+)
 from function_app import app
 from shared.date_utils import is_at_most_one_day_old
 
@@ -35,24 +39,32 @@ def _has_chapter_for_today(html) -> str | None:
     schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
 )
 @task_output_binding()
+@telegram_output_binding()
 def skeleton_soldier_update(
     mytimer: func.TimerRequest,
     taskOutput: func.Out[func.EventGridOutputEvent],
+    telegramOutput: func.Out[func.EventGridOutputEvent],
 ):
-    url = "https://demonicscans.org/manga/Skeleton-Soldier"
+    try:
+        url = "https://demonicscans.org/manga/Skeleton-Soldier"
 
-    html = requests.get(url).text
+        html = requests.get(url).text
 
-    chapter_number = _has_chapter_for_today(html)
-    if chapter_number:
-        taskOutput.set(
-            create_task_output_event(
-                title=f"Skeleton Soldier {chapter_number}",
-                notes=url,
-                tasklist=TaskListType.MANGA,
+        chapter_number = _has_chapter_for_today(html)
+        if chapter_number:
+            taskOutput.set(
+                create_task_output_event(
+                    title=f"Skeleton Soldier {chapter_number}",
+                    notes=url,
+                    tasklist=TaskListType.MANGA,
+                )
             )
-        )
-        logging.info(f"Skeleton Soldier: {chapter_number}")
-        return
+            logging.info(f"Skeleton Soldier: {chapter_number}")
+            return
 
-    logging.info("Skeleton Soldier: No update found")
+        logging.info("Skeleton Soldier: No update found")
+    except Exception as e:
+        logging.error(str(e))
+        telegramOutput.set(
+            create_telegram_output_event(message=f"Error in skeleton_soldier_update: {str(e)}")
+        )

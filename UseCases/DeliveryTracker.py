@@ -9,6 +9,10 @@ from Infrastructure.google_task.azure_helper import (
     create_task_output_event,
     task_output_binding,
 )
+from Infrastructure.telegram.azure_helper import (
+    create_telegram_output_event,
+    telegram_output_binding,
+)
 from function_app import app
 from shared.GoogleServices import GmailService
 from shared.AzureHelper import get_secret
@@ -26,25 +30,34 @@ def _load_credentials() -> Credentials:
     schedule="30 * * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
 )
 @task_output_binding()
+@telegram_output_binding()
 def dhl_mail_to_task(
     mytimer: func.TimerRequest,
     taskOutput: func.Out[func.EventGridOutputEvent],
+    telegramOutput: func.Out[func.EventGridOutputEvent],
 ):
-    credentials = _load_credentials()
-    gmail_service = GmailService(credentials)
+    try:
+        credentials = _load_credentials()
+        gmail_service = GmailService(credentials)
 
-    dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
-    if not dhl_mails:
-        nothing_new_msg = "No DHL pickup notifications found"
-        logging.info({"message": nothing_new_msg})
-        return
+        dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
+        if not dhl_mails:
+            nothing_new_msg = "No DHL pickup notifications found"
+            logging.info({"message": nothing_new_msg})
+            return
 
-    logging.info(f"Found {len(dhl_mails)} DHL pickup notifications")
+        logging.info(f"Found {len(dhl_mails)} DHL pickup notifications")
 
-    for mail in dhl_mails:
-        notes = (
-            f"Abholort: {mail['pickup_location']}\n"
-            f"Abholen bis: {mail['due_date']}\n"
-            f"Tracking: {mail['tracking_number']}"
+        for mail in dhl_mails:
+            notes = (
+                f"Abholort: {mail['pickup_location']}\n"
+                f"Abholen bis: {mail['due_date']}\n"
+                f"Tracking: {mail['tracking_number']}"
+            )
+            taskOutput.set(create_task_output_event(title="Paket abholen", notes=notes))
+    except Exception as e:
+        logging.error(str(e))
+
+        telegramOutput.set(
+            create_telegram_output_event(message=f"Error in dhl_mail_to_task: {str(e)}")
         )
-        taskOutput.set(create_task_output_event(title="Paket abholen", notes=notes))

@@ -12,6 +12,10 @@ from Infrastructure.google_task.azure_helper import (
     TaskListType,
     task_output_binding,
 )
+from Infrastructure.telegram.azure_helper import (
+    create_telegram_output_event,
+    telegram_output_binding,
+)
 from shared.date_utils import is_at_most_one_day_old
 
 mangas = [
@@ -58,32 +62,41 @@ mangas = [
     schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
 )
 @task_output_binding()
+@telegram_output_binding()
 def manga_update(
     mytimer: func.TimerRequest,
     taskOutput: func.Out[func.EventGridOutputEvent],
+    telegramOutput: func.Out[func.EventGridOutputEvent],
 ) -> None:
-    logging.info("MangaUpdate timer function processed a request.")
+    try:
+        logging.info("MangaUpdate timer function processed a request.")
 
-    service = MangaUpdateService()
+        service = MangaUpdateService()
 
-    for manga in mangas:
-        try:
-            latest_chapter = service.get_latest_chapter(manga)
-            logging.info(
-                f"Latest chapter for {manga.title}: Chapter {latest_chapter.chapter} ({latest_chapter.release_date.strftime('%Y-%m-%d')})"
-            )
-
-            if is_at_most_one_day_old(latest_chapter.release_date):
-                taskOutput.set(
-                    create_task_output_event(
-                        title=f"{manga.title} Chapter {latest_chapter.chapter}",
-                        notes=manga.url,
-                        tasklist=TaskListType.MANGA,
-                    )
-                )
+        for manga in mangas:
+            try:
+                latest_chapter = service.get_latest_chapter(manga)
                 logging.info(
-                    f"Created task for {manga.title} Chapter {latest_chapter.chapter}"
+                    f"Latest chapter for {manga.title}: Chapter {latest_chapter.chapter} ({latest_chapter.release_date.strftime('%Y-%m-%d')})"
                 )
 
-        except Exception as e:
-            logging.error(f"Failed to process manga {manga.title}: {str(e)}")
+                if is_at_most_one_day_old(latest_chapter.release_date):
+                    taskOutput.set(
+                        create_task_output_event(
+                            title=f"{manga.title} Chapter {latest_chapter.chapter}",
+                            notes=manga.url,
+                            tasklist=TaskListType.MANGA,
+                        )
+                    )
+                    logging.info(
+                        f"Created task for {manga.title} Chapter {latest_chapter.chapter}"
+                    )
+
+            except Exception as e:
+                error_msg = f"Failed to process manga {manga.title}: {str(e)}"
+                logging.error(error_msg)
+                telegramOutput.set(create_telegram_output_event(message=error_msg))
+    except Exception as e:
+        error_msg = f"Error in manga_update: {str(e)}"
+        logging.error(error_msg)
+        telegramOutput.set(create_telegram_output_event(message=error_msg))
