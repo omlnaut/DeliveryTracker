@@ -22,7 +22,7 @@ def _load_credentials() -> Credentials:
     return Credentials.from_authorized_user_info(credentials_info)
 
 
-@app.timer_trigger(schedule="5 * * * *", arg_name="mytimer", run_on_startup=False)
+@app.timer_trigger(schedule="30 * * * *", arg_name="mytimer", run_on_startup=False)
 @task_output_binding()
 def dhl_mail_to_task(
     mytimer: func.TimerRequest,
