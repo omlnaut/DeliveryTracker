@@ -54,7 +54,9 @@ mangas = [
 ]
 
 
-@app.timer_trigger(schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False)
+@app.timer_trigger(
+    schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
+)
 @task_output_binding()
 def manga_update(
     mytimer: func.TimerRequest,
