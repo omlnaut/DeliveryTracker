@@ -27,7 +27,7 @@ def _load_credentials() -> Credentials:
 
 
 @app.timer_trigger(
-    schedule="30 * * * *", arg_name="mytimer", run_on_startup=True, use_monitor=False
+    schedule="30 * * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
 )
 @task_output_binding()
 @telegram_output_binding()
@@ -50,6 +50,7 @@ def dhl_mail_to_task(
 
         for mail in dhl_mails:
             notes = (
+                f"{mail['preview']}\n"
                 f"Abholort: {mail['pickup_location']}\n"
                 f"Abholen bis: {mail['due_date']}\n"
                 f"Tracking: {mail['tracking_number']}"
