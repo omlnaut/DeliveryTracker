@@ -9,3 +9,4 @@ def test_parses_correct_information_from_raw_html():
     assert parsed["tracking_number"] == "JJD000390016890406943"
     assert parsed["pickup_location"] == "Packstation 158, Südhöhe 38"
     assert parsed["due_date"] == "10.01.2025"
+    assert parsed["preview"] == "Reorda&reg; Metallband..."

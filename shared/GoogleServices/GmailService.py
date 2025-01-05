@@ -94,6 +94,40 @@ class GmailService:
             return []
 
     @staticmethod
+    def _find_preview(soup: BeautifulSoup) -> str:
+
+        # Step 1: Find the <span> that contains the text "ARTIKEL"
+        artikel_span = soup.find(
+            "span", class_="rio_15_grey", string=re.compile(r"\bARTIKEL\b")
+        )
+        if not artikel_span:
+            return "Unknown item"
+
+        # Step 2: Get the parent <tr> that holds this <span>
+        artikel_tr = artikel_span.find_parent("tr")
+        if not artikel_tr:
+            return "Unknown item"
+
+        # Step 3: Get the next <tr> sibling
+        next_tr = artikel_tr.find_next_sibling("tr")
+        if not next_tr:
+            return "Unknown item"
+
+        # Step 4: Extract the text you want.
+        # If you want the entire row’s text, preserving &reg;:
+        item_html = next_tr.decode_contents(formatter="html").strip()
+
+        # OPTIONAL: If you only want a specific <span> inside the next <tr>
+        # that might hold the item name, e.g. <span class="rio_15_heavy_black"> Reorda&reg; Metallband...</span>:
+        item_span = next_tr.find("span", class_="rio_15_heavy_black")
+        if item_span:
+            # decode_contents(formatter="html") preserves &reg; instead of converting it to ®
+            item_text = item_span.decode_contents(formatter="html").strip()
+            return item_text
+
+        return "Unknown item"
+
+    @staticmethod
     def _parse_dhl_pickup_email_html(html_content: str) -> dict:
         """
 
@@ -105,8 +139,6 @@ class GmailService:
         Returns:
             dict: Dictionary containing parsed information (tracking_number, pickup_location, due_date)
         """
-        with open("dhl_test.html", "w") as f:
-            f.write(html_content)
         # Parse HTML content
         soup = BeautifulSoup(html_content, "html.parser")
         text_content = soup.get_text()
@@ -179,10 +211,13 @@ class GmailService:
             except (ValueError, AttributeError):
                 due_date = None
 
+        preview = GmailService._find_preview(soup)
+
         return {
             "tracking_number": tracking_number,
             "pickup_location": location_text,
             "due_date": due_date,
+            "preview": preview,
         }
 
     def get_amazon_dhl_pickup_emails(self, hours=1):
