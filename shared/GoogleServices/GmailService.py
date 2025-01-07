@@ -115,14 +115,14 @@ class GmailService:
 
         # Step 4: Extract the text you want.
         # If you want the entire row’s text, preserving &reg;:
-        item_html = next_tr.decode_contents(formatter="html").strip()
+        item_html = next_tr.decode_contents(formatter="html").strip()  # type: ignore
 
         # OPTIONAL: If you only want a specific <span> inside the next <tr>
         # that might hold the item name, e.g. <span class="rio_15_heavy_black"> Reorda&reg; Metallband...</span>:
-        item_span = next_tr.find("span", class_="rio_15_heavy_black")
+        item_span = next_tr.find("span", class_="rio_15_heavy_black")  # type: ignore
         if item_span:
             # decode_contents(formatter="html") preserves &reg; instead of converting it to ®
-            item_text = item_span.decode_contents(formatter="html").strip()
+            item_text = item_span.decode_contents(formatter="html").strip()  # type: ignore
             return item_text
 
         return "Unknown item"
