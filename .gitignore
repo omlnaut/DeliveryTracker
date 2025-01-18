@@ -11,3 +11,4 @@ __blobstorage__
 local.settings.json
 .coverage
 UseCases/MangaUpdate/openapi.yaml
+investigations/testi_attachment.pdf

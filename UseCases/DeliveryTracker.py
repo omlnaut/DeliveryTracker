@@ -40,7 +40,7 @@ def dhl_mail_to_task(
         credentials = _load_credentials()
         gmail_service = GmailService(credentials)
 
-        dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=60)
+        dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
         if not dhl_mails:
             nothing_new_msg = "No DHL pickup notifications found"
             logging.info({"message": nothing_new_msg})
