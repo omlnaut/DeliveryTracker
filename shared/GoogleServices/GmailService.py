@@ -4,6 +4,8 @@ import base64
 import re
 from bs4 import BeautifulSoup
 
+from .GmailQueryBuilder import GmailQueryBuilder
+
 # German month names mapping
 GERMAN_MONTHS = {
     "Januar": 1,
@@ -33,44 +35,124 @@ class GmailService:
             "gmail", "v1", credentials=self.credentials, cache_discovery=False
         )
 
-    def get_recent_emails(self, days=2):
+    def _query_messages(self, query):
         """
-        Fetch emails received in the last specified hours.
+        Query messages using Gmail API with the given query.
 
         Args:
-            hours (int): Number of hours to look back (default: 1)
+            query (str): Gmail search query
 
         Returns:
-            list: List of dictionaries containing email details
+            list: List of message IDs and thread IDs
         """
         if not self.service:
             self.authenticate()
 
-        # Calculate time threshold
-        time_threshold = datetime.now(timezone.utc) - timedelta(days=days)
-        query = f"after:{int(time_threshold.timestamp())}"
-
         try:
             results = (
-                self.service.users().messages().list(userId="me", q=query).execute()  # type: ignore
+                self.service.users().messages().list(userId="me", q=query).execute()
+            )
+            return results.get("messages", [])
+        except Exception as e:
+            print(f"Error querying messages: {str(e)}")
+            return []
+
+    def _fetch_message_details(self, message_id, format="full", metadata_headers=None):
+        """
+        Fetch details for a specific message.
+
+        Args:
+            message_id (str): The ID of the message to fetch
+            format (str): The format to return the message in (full, metadata, minimal)
+            metadata_headers (list): List of headers to include when format is metadata
+
+        Returns:
+            dict: Message details
+        """
+        try:
+            kwargs = {"userId": "me", "id": message_id, "format": format}
+            if metadata_headers and format == "metadata":
+                kwargs["metadataHeaders"] = metadata_headers
+
+            return self.service.users().messages().get(**kwargs).execute()
+        except Exception as e:
+            print(f"Error fetching message details: {str(e)}")
+            return None
+
+    def download_pdf_attachments(self, message_id) -> list[str]:
+        """
+        Download all PDF attachments from a given message.
+
+        Args:
+            message_id (str): The ID of the message to get attachments from
+
+        Returns:
+            list: List of dictionaries containing attachment details (filename, data)
+        """
+        if not self.service:
+            self.authenticate()
+
+        try:
+            message = self._fetch_message_details(message_id)
+            if not message:
+                return []
+
+            attachments = []
+            parts = message.get("payload", {}).get("parts", [])
+
+            for part in parts:
+                filename = part.get("filename", "")
+                if filename.lower().endswith(".pdf"):
+                    if "body" in part and "attachmentId" in part["body"]:
+                        attachment = (
+                            self.service.users()
+                            .messages()
+                            .attachments()
+                            .get(
+                                userId="me",
+                                messageId=message_id,
+                                id=part["body"]["attachmentId"],
+                            )
+                            .execute()
+                        )
+
+                        if attachment:
+                            with open(filename, "wb") as f:
+                                f.write(base64.urlsafe_b64decode(attachment["data"]))
+                            attachments.append(filename)
+
+            return attachments
+        except Exception as e:
+            print(f"Error downloading attachments: {str(e)}")
+            return []
+
+    def get_recent_emails(self, days=2):
+        """
+        Fetch emails received in the last specified days.
+
+        Args:
+            days (int): Number of days to look back (default: 2)
+
+        Returns:
+            list: List of dictionaries containing email details
+        """
+        # Calculate time threshold
+        time_threshold = datetime.now(timezone.utc) - timedelta(days=days)
+
+        # Build query
+        query = GmailQueryBuilder().after_date(time_threshold).build()
+
+        messages = self._query_messages(query)
+        emails = []
+
+        for message in messages:
+            msg_details = self._fetch_message_details(
+                message["id"],
+                format="metadata",
+                metadata_headers=["From", "Subject", "Date"],
             )
 
-            messages = results.get("messages", [])
-            emails = []
-
-            for message in messages:
-                msg_details = (
-                    self.service.users()  # type: ignore
-                    .messages()
-                    .get(
-                        userId="me",
-                        id=message["id"],
-                        format="metadata",
-                        metadataHeaders=["From", "Subject", "Date"],
-                    )
-                    .execute()
-                )
-
+            if msg_details:
                 headers = msg_details["payload"]["headers"]
                 email_data = {
                     "id": message["id"],
@@ -87,11 +169,7 @@ class GmailService:
                 }
                 emails.append(email_data)
 
-            return emails
-
-        except Exception as e:
-            print(f"Error fetching emails: {str(e)}")
-            return []
+        return emails
 
     @staticmethod
     def _find_preview(soup: BeautifulSoup) -> str:
@@ -222,67 +300,52 @@ class GmailService:
 
     def get_amazon_dhl_pickup_emails(self, hours=1):
         """
-        Fetch Amazon DHL pickup notification emails from the last specified days.
+        Fetch Amazon DHL pickup notification emails from the last specified hours.
 
         Args:
-            days (int): Number of days to look back (default: 2)
+            hours (int): Number of hours to look back (default: 1)
 
         Returns:
             list: List of dictionaries containing email details including pickup location,
                   due date, and tracking number
         """
-        if not self.service:
-            self.authenticate()
-
         # Calculate time threshold
         time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+
+        # Build query
         query = (
-            f"from:order-update@amazon.de "
-            f'subject:"Ihr Paket kann bei DHL abgeholt werden" '
-            f"after:{int(time_threshold.timestamp())}"
+            GmailQueryBuilder()
+            .from_email("order-update@amazon.de")
+            .subject("Ihr Paket kann bei DHL abgeholt werden", exact=True)
+            .after_date(time_threshold)
+            .build()
         )
 
-        try:
-            results = (
-                self.service.users().messages().list(userId="me", q=query).execute()  # type: ignore
-            )
+        messages = self._query_messages(query)
+        emails = []
 
-            messages = results.get("messages", [])
-            emails = []
+        for message in messages:
+            msg_details = self._fetch_message_details(message["id"])
+            if not msg_details:
+                continue
 
-            for message in messages:
-                # Get the full message content
-                msg_details = (
-                    self.service.users()  # type: ignore
-                    .messages()
-                    .get(userId="me", id=message["id"], format="full")
-                    .execute()
-                )
+            # Get email body
+            if "parts" in msg_details["payload"]:
+                parts = msg_details["payload"]["parts"]
+                body = ""
+                for part in parts:
+                    if part["mimeType"] == "text/html":
+                        body = base64.urlsafe_b64decode(
+                            part["body"]["data"].encode("utf-8")
+                        ).decode("utf-8")
+                        break
+            else:
+                body = base64.urlsafe_b64decode(
+                    msg_details["payload"]["body"]["data"].encode("utf-8")
+                ).decode("utf-8")
 
-                headers = msg_details["payload"]["headers"]
+            # Parse the email content
+            parsed_data = self._parse_dhl_pickup_email_html(body)
+            emails.append(parsed_data)
 
-                # Get email body
-                if "parts" in msg_details["payload"]:
-                    parts = msg_details["payload"]["parts"]
-                    body = ""
-                    for part in parts:
-                        if part["mimeType"] == "text/html":
-                            body = base64.urlsafe_b64decode(
-                                part["body"]["data"].encode("utf-8")
-                            ).decode("utf-8")
-                            break
-                else:
-                    body = base64.urlsafe_b64decode(
-                        msg_details["payload"]["body"]["data"].encode("utf-8")
-                    ).decode("utf-8")
-
-                # Parse the email content
-                parsed_data = self._parse_dhl_pickup_email_html(body)
-
-                emails.append(parsed_data)
-
-            return emails
-
-        except Exception as e:
-            print(f"Error fetching emails: {str(e)}")
-            return []
+        return emails
