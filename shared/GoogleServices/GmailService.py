@@ -349,3 +349,33 @@ class GmailService:
             emails.append(parsed_data)
 
         return emails
+
+    def get_winsim_invoice_messages(self, hours=1) -> list[str]:
+        """
+        Fetch WinSIM invoice notification emails from the last specified hours.
+
+        Args:
+            hours (int): Number of hours to look back (default: 1)
+
+        Returns:
+            list[dict]: List of dictionaries containing message IDs and invoice details
+                Each dict contains:
+                - id: The Gmail message ID
+                - invoice_number: The invoice number extracted from the PDF filename
+                - date: The date of the email
+        """
+        # Calculate time threshold
+        time_threshold = datetime.now(timezone.utc) - timedelta(hours=hours)
+
+        # Build query
+        query = (
+            GmailQueryBuilder()
+            .from_email("no-reply@winsim.de")
+            .subject("Ihre winSIM-Rechnung", exact=True)
+            .after_date(time_threshold)
+            .build()
+        )
+
+        messages = self._query_messages(query)
+
+        return [msg["id"] for msg in messages]
