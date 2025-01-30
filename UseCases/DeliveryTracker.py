@@ -48,6 +48,7 @@ def dhl_mail_to_task(
 
         logging.info(f"Found {len(dhl_mails)} DHL pickup notifications")
 
+        tasks: list[func.EventGridOutputEvent] = []
         for mail in dhl_mails:
             notes = (
                 f"{mail['preview']}\n"
@@ -55,7 +56,9 @@ def dhl_mail_to_task(
                 f"Abholen bis: {mail['due_date']}\n"
                 f"Tracking: {mail['tracking_number']}"
             )
-            taskOutput.set(create_task_output_event(title="Paket abholen", notes=notes))
+            tasks.append(create_task_output_event(title="Paket abholen", notes=notes))
+
+        taskOutput.set(tasks)  # type: ignore
     except Exception as e:
         logging.error(str(e))
 

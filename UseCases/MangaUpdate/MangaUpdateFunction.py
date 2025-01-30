@@ -59,7 +59,7 @@ mangas = [
 
 
 @app.timer_trigger(
-    schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
+    schedule="7 6 * * *", arg_name="mytimer", run_on_startup=True, use_monitor=False
 )
 @task_output_binding()
 @telegram_output_binding()
@@ -73,6 +73,7 @@ def manga_update(
 
         service = MangaUpdateService()
 
+        tasks: list[func.EventGridOutputEvent] = []
         for manga in mangas:
             try:
                 latest_chapter = service.get_latest_chapter(manga)
@@ -81,13 +82,14 @@ def manga_update(
                 )
 
                 if is_at_most_one_day_old(latest_chapter.release_date):
-                    taskOutput.set(
+                    tasks.append(
                         create_task_output_event(
                             title=f"{manga.title} Chapter {latest_chapter.chapter}",
                             notes=manga.url,
                             tasklist=TaskListType.MANGA,
                         )
                     )
+
                     logging.info(
                         f"Created task for {manga.title} Chapter {latest_chapter.chapter}"
                     )
@@ -95,7 +97,11 @@ def manga_update(
             except Exception as e:
                 error_msg = f"Failed to process manga {manga.title}: {str(e)}"
                 logging.error(error_msg)
-                telegramOutput.set(create_telegram_output_event(message=error_msg))
+                tasks.append(create_telegram_output_event(message=error_msg))
+
+        if tasks:
+            # azure functions is wrongly typed here, it actually accepts a list of events to publish
+            taskOutput.set(tasks)  # type: ignore
     except Exception as e:
         error_msg = f"Error in manga_update: {str(e)}"
         logging.error(error_msg)
