@@ -59,7 +59,7 @@ mangas = [
 
 
 @app.timer_trigger(
-    schedule="7 6 * * *", arg_name="mytimer", run_on_startup=True, use_monitor=False
+    schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
 )
 @task_output_binding()
 @telegram_output_binding()
