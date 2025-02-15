@@ -12,3 +12,5 @@ local.settings.json
 .coverage
 UseCases/MangaUpdate/openapi.yaml
 investigations/testi_attachment.pdf
+investigations/mietplan_credentials.json
+*.pdf
