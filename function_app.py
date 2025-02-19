@@ -7,7 +7,7 @@ import UseCases.DeliveryTracker
 import UseCases.SkeletonSoldier
 import UseCases.MangaUpdate
 import UseCases.WinSimInvoice
-from UseCases import Mietplan
+from UseCases.mietplan import MietplanFunction
 
 import Infrastructure.telegram.Telegram
 import Infrastructure.google_task.GoogleTask
