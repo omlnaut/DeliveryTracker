@@ -1,4 +1,8 @@
 class FolderMetadata:
+    """
+    As returned by mietplan api
+    """
+
     name: str
     folder_id: str
     has_subfolders: bool
