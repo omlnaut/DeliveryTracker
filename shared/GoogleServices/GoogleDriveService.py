@@ -74,35 +74,40 @@ class GoogleDriveService:
                 ".txt": "text/plain",
                 ".csv": "text/csv",
             }
-            mime_type = mime_types.get(file_path.suffix.lower(), "application/octet-stream")
+            mime_type = mime_types.get(
+                file_path.suffix.lower(), "application/octet-stream"
+            )
 
         try:
             # Prepare file metadata
-            file_metadata = {
-                "name": filename,
-                "parents": [drive_folder_id]
-            }
+            file_metadata = {"name": filename, "parents": [drive_folder_id]}
 
             # Create media upload object
             media = MediaFileUpload(
                 str(file_path),
                 mimetype=mime_type,
-                resumable=True  # Enable resumable uploads for larger files
+                resumable=True,  # Enable resumable uploads for larger files
             )
 
             # Upload the file
-            uploaded_file = self.service.files().create(
-                body=file_metadata,
-                media_body=media,
-                fields="id"  # Only return the file ID
-            ).execute()
+            uploaded_file = (
+                self.service.files()
+                .create(
+                    body=file_metadata,
+                    media_body=media,
+                    fields="id",  # Only return the file ID
+                )
+                .execute()
+            )
 
             return uploaded_file.get("id")
 
         except Exception as e:
             raise Exception(f"Error uploading file to Google Drive: {str(e)}")
 
-    def create_folder(self, folder_name: str, parent_folder_id: Optional[str] = None) -> str:
+    def create_folder(
+        self, folder_name: str, parent_folder_id: Optional[str] = None
+    ) -> str:
         """
         Create a new folder in Google Drive.
 
@@ -123,18 +128,92 @@ class GoogleDriveService:
         try:
             file_metadata = {
                 "name": folder_name,
-                "mimeType": "application/vnd.google-apps.folder"
+                "mimeType": "application/vnd.google-apps.folder",
             }
-            
+
             if parent_folder_id:
                 file_metadata["parents"] = [parent_folder_id]
 
-            folder = self.service.files().create(
-                body=file_metadata,
-                fields="id"
-            ).execute()
+            folder = (
+                self.service.files().create(body=file_metadata, fields="id").execute()
+            )
 
             return folder.get("id")
 
         except Exception as e:
             raise Exception(f"Error creating folder in Google Drive: {str(e)}")
+
+    def find_or_create_folder(self, folder_name: str, parent_id: str) -> str:
+        """
+        Find or create a folder with the given name under the specified parent folder.
+
+        Args:
+            folder_name: Name of the folder to find or create
+            parent_id: ID of the parent folder to search in
+
+        Returns:
+            str: ID of the existing or newly created folder
+
+        Raises:
+            ValueError: If the service is not authenticated
+        """
+        if not self.service:
+            self.authenticate()
+
+        # Search for existing folder
+        query = (
+            f"mimeType = 'application/vnd.google-apps.folder' "
+            f"and name = '{folder_name}' "
+            f"and '{parent_id}' in parents "
+            f"and trashed = false"
+        )
+
+        results = (
+            self.service.files()
+            .list(
+                q=query,
+                spaces="drive",
+                fields="files(id, name)",
+            )
+            .execute()
+        )
+
+        folders = results.get("files", [])
+        if len(folders) > 0:
+            return folders[0]["id"]
+
+        # Create new folder if not found
+        folder_metadata = {
+            "name": folder_name,
+            "mimeType": "application/vnd.google-apps.folder",
+            "parents": [parent_id],
+        }
+        folder = (
+            self.service.files().create(body=folder_metadata, fields="id").execute()
+        )
+
+        return folder.get("id")
+
+    def get_folder_id_by_path(self, root_folder_id: str, path: list[str]) -> str:
+        """
+        Get or create a folder path starting from a root folder.
+
+        Args:
+            root_folder_id: ID of the starting folder
+            path: List of folder names representing the path (e.g. ['sub1', 'sub2', 'sub3'])
+
+        Returns:
+            str: ID of the final folder in the path
+
+        Raises:
+            ValueError: If the service is not authenticated
+        """
+        if not self.service:
+            self.authenticate()
+
+        current_parent_id = root_folder_id
+        for folder_name in path:
+            current_parent_id = self.find_or_create_folder(
+                folder_name, current_parent_id
+            )
+        return current_parent_id
