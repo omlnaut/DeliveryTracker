@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 
 from UseCases.mietplan.FileMetadata import FileMetadata
 from UseCases.mietplan.FolderMetadata import FolderMetadata
+from UseCases.mietplan.models import File, Folder
 
 # Constants
 LOGIN_CSRF_URL = "https://mietplan-dresden.de/login/"
@@ -89,3 +90,40 @@ def download_file(session: requests.Session, download_path: str) -> None:
     filename = download_url.split("/")[-1]
     with open(filename, "wb") as file:
         file.write(response.content)
+
+
+def walk_from_top_folder(session: requests.Session, top_folder_id: str):
+    """
+    Walk through all folders recursively starting from the top folder.
+    Yields each folder with its files and full path.
+
+    Args:
+        session: Authenticated session
+        top_folder_id: ID of the starting folder
+
+    Yields:
+        Folder: Contains folder info, path and files
+    """
+    folders_to_check = [
+        Folder(folder.folder_id, [folder.name], [])
+        for folder in get_folders(session, top_folder_id)
+    ]
+
+    while folders_to_check:
+        folder = folders_to_check.pop()
+
+        # Get files in current folder
+        files = get_files(session, folder.id)
+        for file in files:
+            folder.files.append(
+                File(file.creation_date, file.filename, file.download_path)
+            )
+
+        yield folder
+
+        # Check for subfolders and add them to processing queue
+        sub_folders = get_folders(session, folder.id)
+        for sub_folder in sub_folders:
+            folders_to_check.append(
+                Folder(sub_folder.folder_id, folder.path + [sub_folder.name], [])
+            )
