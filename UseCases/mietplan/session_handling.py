@@ -1,3 +1,4 @@
+from typing import Generator
 import requests
 from bs4 import BeautifulSoup
 
@@ -83,7 +84,7 @@ def get_files(session: requests.Session, folder_id: str) -> list[FileMetadata]:
     return [FileMetadata.from_json(file_json) for file_json in response.json().values()]
 
 
-def download_file(session: requests.Session, download_path: str) -> None:
+def download_file(session: requests.Session, download_path: str) -> str:
     download_base = "https://mietplan-dresden.de"
     download_url = download_base + download_path
     response = session.get(download_url)
@@ -91,8 +92,12 @@ def download_file(session: requests.Session, download_path: str) -> None:
     with open(filename, "wb") as file:
         file.write(response.content)
 
+    return filename
 
-def walk_from_top_folder(session: requests.Session, top_folder_id: str):
+
+def walk_from_top_folder(
+    session: requests.Session, top_folder_id: str
+) -> Generator[Folder, None, None]:
     """
     Walk through all folders recursively starting from the top folder.
     Yields each folder with its files and full path.
