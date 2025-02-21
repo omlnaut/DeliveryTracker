@@ -13,3 +13,4 @@ local.settings.json
 UseCases/MangaUpdate/openapi.yaml
 mietplan_credentials.json
 *.pdf
+lohnzettel_pw.secret
