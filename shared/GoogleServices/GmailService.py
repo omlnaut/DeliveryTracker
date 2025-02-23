@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta, timezone
 import base64
@@ -23,6 +24,12 @@ GERMAN_MONTHS = {
 }
 
 
+@dataclass
+class MessageId:
+    id: str
+    thread_id: str
+
+
 class GmailService:
     def __init__(self, credentials):
         self.credentials = credentials
@@ -35,7 +42,7 @@ class GmailService:
             "gmail", "v1", credentials=self.credentials, cache_discovery=False
         )
 
-    def _query_messages(self, query):
+    def _query_messages(self, query) -> list[MessageId]:
         """
         Query messages using Gmail API with the given query.
 
@@ -52,12 +59,18 @@ class GmailService:
             results = (
                 self.service.users().messages().list(userId="me", q=query).execute()  # type: ignore
             )
-            return results.get("messages", [])
+            messages = results.get("messages", [])
+            return [
+                MessageId(id=message["id"], thread_id=message.get("threadId", ""))
+                for message in messages
+            ]
         except Exception as e:
             print(f"Error querying messages: {str(e)}")
             return []
 
-    def _fetch_message_details(self, message_id, format="full", metadata_headers=None):
+    def _fetch_message_details(
+        self, message_id: str, format="full", metadata_headers=None
+    ):
         """
         Fetch details for a specific message.
 
@@ -147,7 +160,7 @@ class GmailService:
 
         for message in messages:
             msg_details = self._fetch_message_details(
-                message["id"],
+                message.id,
                 format="metadata",
                 metadata_headers=["From", "Subject", "Date"],
             )
@@ -155,7 +168,7 @@ class GmailService:
             if msg_details:
                 headers = msg_details["payload"]["headers"]
                 email_data = {
-                    "id": message["id"],
+                    "id": message.id,
                     "from": next(
                         (h["value"] for h in headers if h["name"] == "From"), ""
                     ),
@@ -325,7 +338,7 @@ class GmailService:
         emails = []
 
         for message in messages:
-            msg_details = self._fetch_message_details(message["id"])
+            msg_details = self._fetch_message_details(message.id)
             if not msg_details:
                 continue
 
@@ -378,4 +391,4 @@ class GmailService:
 
         messages = self._query_messages(query)
 
-        return [msg["id"] for msg in messages]
+        return [msg.id for msg in messages]

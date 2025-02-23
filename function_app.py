@@ -8,6 +8,7 @@ import UseCases.SkeletonSoldier
 import UseCases.MangaUpdate
 import UseCases.WinSimInvoice
 from UseCases.mietplan import MietplanFunction
+from UseCases.Lohnzettel import save_lohnzettel
 
 import Infrastructure.telegram.Telegram
 import Infrastructure.google_task.GoogleTask
