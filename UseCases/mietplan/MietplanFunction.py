@@ -50,16 +50,16 @@ def mietplan(
     login(session, username, password)
 
     new_files = []
-    latest_file_date = None
+    latest_file = None
     for folder in walk_from_top_folder(session, MAIN_FOLDER_ID):
         logging.info(f"Folder: {folder.path}")
         for file in folder.files:
 
-            # update latest_file_date
-            if latest_file_date is None:
-                latest_file_date = file.creation_date
+            # update latest_file
+            if latest_file is None:
+                latest_file = file
             else:
-                latest_file_date = max(file.creation_date, latest_file_date)
+                latest_file = max(file, latest_file, key=lambda f: f.creation_date)
 
             if file.creation_date > ref_date - timedelta(days=1):
                 logging.info(f"  File: {file.name}")
@@ -78,6 +78,6 @@ def mietplan(
                     )
                 )
 
-    logging.info(f"Latest file date: {latest_file_date}")
+    logging.info(f"Latest file: {latest_file}")
     if new_files:
         telegramOutput.set(new_files)  # type: ignore
