@@ -91,7 +91,7 @@ class GoogleDriveService:
 
             # Upload the file
             uploaded_file = (
-                self.service.files()
+                self.service.files()  # type: ignore
                 .create(
                     body=file_metadata,
                     media_body=media,
@@ -126,7 +126,7 @@ class GoogleDriveService:
             self.authenticate()
 
         try:
-            file_metadata = {
+            file_metadata: dict[str, str | list[str]] = {
                 "name": folder_name,
                 "mimeType": "application/vnd.google-apps.folder",
             }
@@ -135,7 +135,7 @@ class GoogleDriveService:
                 file_metadata["parents"] = [parent_folder_id]
 
             folder = (
-                self.service.files().create(body=file_metadata, fields="id").execute()
+                self.service.files().create(body=file_metadata, fields="id").execute()  # type: ignore
             )
 
             return folder.get("id")
@@ -169,7 +169,7 @@ class GoogleDriveService:
         )
 
         results = (
-            self.service.files()
+            self.service.files()  # type: ignore
             .list(
                 q=query,
                 spaces="drive",
@@ -189,7 +189,7 @@ class GoogleDriveService:
             "parents": [parent_id],
         }
         folder = (
-            self.service.files().create(body=folder_metadata, fields="id").execute()
+            self.service.files().create(body=folder_metadata, fields="id").execute()  # type: ignore
         )
 
         return folder.get("id")

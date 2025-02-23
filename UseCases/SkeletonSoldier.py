@@ -25,7 +25,7 @@ def _has_chapter_for_today(html) -> str | None:
     chapters_list = soup.find("div", {"id": "chapters-list"})
     chapter_links = chapters_list.find_all("a", class_="chplinks")  # type: ignore
     for link in chapter_links:
-        span = link.find("span", style="float:right;text-align: right;")
+        span = link.find("span", style="float:right;text-align: right;")  # type: ignore
         if span:
             date_text = span.get_text(strip=True)
             date_obj = datetime.strptime(date_text, "%Y-%m-%d").date()
@@ -66,5 +66,7 @@ def skeleton_soldier_update(
     except Exception as e:
         logging.error(str(e))
         telegramOutput.set(
-            create_telegram_output_event(message=f"Error in skeleton_soldier_update: {str(e)}")
+            create_telegram_output_event(
+                message=f"Error in skeleton_soldier_update: {str(e)}"
+            )
         )

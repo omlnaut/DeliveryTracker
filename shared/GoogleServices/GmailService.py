@@ -50,7 +50,7 @@ class GmailService:
 
         try:
             results = (
-                self.service.users().messages().list(userId="me", q=query).execute()
+                self.service.users().messages().list(userId="me", q=query).execute()  # type: ignore
             )
             return results.get("messages", [])
         except Exception as e:
@@ -74,7 +74,7 @@ class GmailService:
             if metadata_headers and format == "metadata":
                 kwargs["metadataHeaders"] = metadata_headers
 
-            return self.service.users().messages().get(**kwargs).execute()
+            return self.service.users().messages().get(**kwargs).execute()  # type: ignore
         except Exception as e:
             print(f"Error fetching message details: {str(e)}")
             return None
@@ -105,7 +105,7 @@ class GmailService:
                 if filename.lower().endswith(".pdf"):
                     if "body" in part and "attachmentId" in part["body"]:
                         attachment = (
-                            self.service.users()
+                            self.service.users()  # type: ignore
                             .messages()
                             .attachments()
                             .get(
