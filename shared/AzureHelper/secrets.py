@@ -1,5 +1,7 @@
+import json
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
+from google.oauth2.credentials import Credentials
 
 
 def get_secret(secret_name: str) -> str:
@@ -15,3 +17,13 @@ def get_secret(secret_name: str) -> str:
         raise Exception(f"Secret {secret_name} not found in Key Vault")
 
     return secret_str
+
+
+def load_gcloud_credentials() -> Credentials:
+    secret_str = get_secret("GcloudCredentials")
+
+    if not secret_str:
+        raise Exception("GcloudCredentials secret not found in Key Vault")
+
+    credentials_info = json.loads(secret_str)
+    return Credentials.from_authorized_user_info(credentials_info)

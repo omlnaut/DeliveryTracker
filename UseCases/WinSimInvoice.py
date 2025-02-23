@@ -11,14 +11,9 @@ from Infrastructure.telegram.azure_helper import (
     telegram_output_binding,
 )
 from function_app import app
+from shared.AzureHelper.secrets import load_gcloud_credentials
 from shared.GoogleServices import GmailService, GDriveService
 from shared.AzureHelper import get_secret
-
-
-def _load_credentials() -> Credentials:
-    secret_str = get_secret("GcloudCredentials")
-    credentials_info = json.loads(secret_str)  # type: ignore
-    return Credentials.from_authorized_user_info(credentials_info)
 
 
 @app.timer_trigger(
@@ -37,7 +32,7 @@ def check_winsim_invoices(
     """
     try:
         # Load credentials and initialize services
-        credentials = _load_credentials()
+        credentials = load_gcloud_credentials()
         gmail_service = GmailService(credentials)
         drive_service = GDriveService(credentials)
 
