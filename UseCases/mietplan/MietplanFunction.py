@@ -64,7 +64,7 @@ def mietplan(
             if file.creation_date > ref_date - timedelta(days=1):
                 logging.info(f"  File: {file.name}")
                 logging.info("    Downloading...")
-                local_filename = download_file(session, file.url)
+                local_filename = download_file(session, file.url, file.name)
 
                 logging.info(f"Upload to {local_filename} at path {folder.path}")
                 upload_folder_id = drive_service.get_folder_id_by_path(

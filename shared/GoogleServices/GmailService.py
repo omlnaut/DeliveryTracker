@@ -116,7 +116,7 @@ class GmailService:
             parts = message.get("payload", {}).get("parts", [])
 
             for part in parts:
-                filename = part.get("filename", "")
+                filename: str = part.get("filename", "")
                 if filename.lower().endswith(".pdf"):
                     if "body" in part and "attachmentId" in part["body"]:
                         attachment = (
@@ -135,7 +135,7 @@ class GmailService:
                             download_path = get_temp_dir() / filename
                             with open(download_path, "wb") as f:
                                 f.write(base64.urlsafe_b64decode(attachment["data"]))
-                            attachments.append(filename)
+                            attachments.append(download_path.as_posix())
 
             return attachments
         except Exception as e:

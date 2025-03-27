@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from UseCases.mietplan.FileMetadata import FileMetadata
 from UseCases.mietplan.FolderMetadata import FolderMetadata
 from UseCases.mietplan.models import File, Folder
+from shared.AzureHelper.download import get_temp_dir
 
 # Constants
 LOGIN_CSRF_URL = "https://mietplan-dresden.de/login/"
@@ -84,15 +85,16 @@ def get_files(session: requests.Session, folder_id: str) -> list[FileMetadata]:
     return [FileMetadata.from_json(file_json) for file_json in response.json().values()]
 
 
-def download_file(session: requests.Session, download_path: str) -> str:
+def download_file(session: requests.Session, download_path: str, filename: str) -> str:
     download_base = "https://mietplan-dresden.de"
     download_url = download_base + download_path
     response = session.get(download_url)
-    filename = download_url.split("/")[-1]
-    with open(filename, "wb") as file:
+
+    full_path = get_temp_dir() / filename
+    with open(full_path, "wb") as file:
         file.write(response.content)
 
-    return filename
+    return full_path.as_posix()
 
 
 def walk_from_top_folder(
