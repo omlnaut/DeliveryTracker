@@ -1,10 +1,7 @@
-import json
 import logging
 from pathlib import Path
-from typing import Optional
 
 import azure.functions as func
-from google.oauth2.credentials import Credentials
 
 from Infrastructure.telegram.azure_helper import (
     create_telegram_output_event,
@@ -13,7 +10,6 @@ from Infrastructure.telegram.azure_helper import (
 from function_app import app
 from shared.AzureHelper.secrets import load_gcloud_credentials
 from shared.GoogleServices import GmailService, GDriveService
-from shared.AzureHelper import get_secret
 
 
 @app.timer_trigger(

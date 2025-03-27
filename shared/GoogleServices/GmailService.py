@@ -5,6 +5,8 @@ import base64
 import re
 from bs4 import BeautifulSoup
 
+from shared.AzureHelper.download import get_temp_dir
+
 from .GmailQueryBuilder import GmailQueryBuilder
 
 # German month names mapping
@@ -130,7 +132,8 @@ class GmailService:
                         )
 
                         if attachment:
-                            with open(filename, "wb") as f:
+                            download_path = get_temp_dir() / filename
+                            with open(download_path, "wb") as f:
                                 f.write(base64.urlsafe_b64decode(attachment["data"]))
                             attachments.append(filename)
 
