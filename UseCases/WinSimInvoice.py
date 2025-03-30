@@ -105,3 +105,4 @@ def check_winsim_invoices(
     except Exception as e:
         error_msg = f"Error processing WinSIM invoices: {str(e)}"
         logging.error(error_msg)
+        telegram_output_binding.set(create_telegram_output_event(message=error_msg))

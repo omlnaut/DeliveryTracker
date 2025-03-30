@@ -38,46 +38,54 @@ def _load_credentials() -> Credentials:
 def mietplan(
     myTimer: func.TimerRequest, telegramOutput: func.Out[func.EventGridOutputEvent]
 ) -> None:
-    credentials = _load_credentials()
-    drive_service = GDriveService(credentials)
-    username = get_secret("MietplanUsername")
-    password = get_secret("MietplanPassword")
+    try:
+        credentials = _load_credentials()
+        drive_service = GDriveService(credentials)
+        username = get_secret("MietplanUsername")
+        password = get_secret("MietplanPassword")
 
-    ref_date = datetime.now()
+        ref_date = datetime.now()
 
-    session = requests.Session()
+        session = requests.Session()
 
-    login(session, username, password)
+        login(session, username, password)
 
-    new_files = []
-    latest_file = None
-    for folder in walk_from_top_folder(session, MAIN_FOLDER_ID):
-        logging.info(f"Folder: {folder.path}")
-        for file in folder.files:
+        new_files = []
+        latest_file = None
+        for folder in walk_from_top_folder(session, MAIN_FOLDER_ID):
+            logging.info(f"Folder: {folder.path}")
+            for file in folder.files:
 
-            # update latest_file
-            if latest_file is None:
-                latest_file = file
-            else:
-                latest_file = max(file, latest_file, key=lambda f: f.creation_date)
+                # update latest_file
+                if latest_file is None:
+                    latest_file = file
+                else:
+                    latest_file = max(file, latest_file, key=lambda f: f.creation_date)
 
-            if file.creation_date > ref_date - timedelta(days=1):
-                logging.info(f"  File: {file.name}")
-                logging.info("    Downloading...")
-                local_filename = download_file(session, file.url, file.name)
+                if file.creation_date > ref_date - timedelta(days=1):
+                    logging.info(f"  File: {file.name}")
+                    logging.info("    Downloading...")
+                    local_filename = download_file(session, file.url, file.name)
 
-                logging.info(f"Upload to {local_filename} at path {folder.path}")
-                upload_folder_id = drive_service.get_folder_id_by_path(
-                    MIETPLAN_GDRIVE_FOLDER_ID, folder.path
-                )
-                drive_service.upload_file(local_filename, upload_folder_id)
-                os.remove(local_filename)
-                new_files.append(
-                    create_telegram_output_event(
-                        message=f"New mietplan file {file.name} at {folder.path}"
+                    logging.info(f"Upload to {local_filename} at path {folder.path}")
+                    upload_folder_id = drive_service.get_folder_id_by_path(
+                        MIETPLAN_GDRIVE_FOLDER_ID, folder.path
                     )
-                )
+                    drive_service.upload_file(local_filename, upload_folder_id)
+                    os.remove(local_filename)
+                    new_files.append(
+                        create_telegram_output_event(
+                            message=f"New mietplan file {file.name} at {folder.path}"
+                        )
+                    )
 
-    logging.info(f"Latest file: {latest_file}")
-    if new_files:
-        telegramOutput.set(new_files)  # type: ignore
+        logging.info(f"Latest file: {latest_file}")
+        if new_files:
+            telegramOutput.set(new_files)  # type: ignore
+    except Exception as e:
+        logging.error(str(e))
+        telegramOutput.set(
+            create_telegram_output_event(
+                message=f"Error in mietplan function: {str(e)}"
+            )
+        )
