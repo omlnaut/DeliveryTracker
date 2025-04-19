@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, BinaryIO
+from io import BytesIO
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseUpload
 
 
 class GoogleDriveService:
@@ -23,7 +24,7 @@ class GoogleDriveService:
             "drive", "v3", credentials=self.credentials, cache_discovery=False
         )
 
-    def upload_file(
+    def upload_file_from_path(
         self,
         file_path: str | Path,
         drive_folder_id: str,
@@ -104,6 +105,58 @@ class GoogleDriveService:
 
         except Exception as e:
             raise Exception(f"Error uploading file to Google Drive: {str(e)}")
+
+    def upload_file_directly(
+        self,
+        file_content: BytesIO,
+        filename: str,
+        drive_folder_id: str,
+        mime_type: str = "application/octet-stream",
+    ) -> str:
+        """
+        Upload file content directly to Google Drive without requiring a file on disk.
+
+        Args:
+            file_content: BytesIO object containing the file content
+            filename: Name to use for the file in Google Drive
+            drive_folder_id: ID of the Google Drive folder to upload to
+            mime_type: MIME type of the file (defaults to application/octet-stream)
+
+        Returns:
+            str: ID of the uploaded file in Google Drive
+
+        Raises:
+            ValueError: If the service is not authenticated or if params are invalid
+            Exception: If there's an error during upload
+        """
+        if not self.service:
+            self.authenticate()
+
+        if not filename:
+            raise ValueError("Filename must be provided")
+
+        try:
+            # Prepare file metadata
+            file_metadata = {"name": filename, "parents": [drive_folder_id]}
+
+            # Create media upload object from BytesIO
+            media = MediaIoBaseUpload(file_content, mimetype=mime_type, resumable=True)
+
+            # Upload the file
+            uploaded_file = (
+                self.service.files()  # type: ignore
+                .create(
+                    body=file_metadata,
+                    media_body=media,
+                    fields="id",  # Only return the file ID
+                )
+                .execute()
+            )
+
+            return uploaded_file.get("id")
+
+        except Exception as e:
+            raise Exception(f"Error uploading file content to Google Drive: {str(e)}")
 
     def create_folder(
         self, folder_name: str, parent_folder_id: Optional[str] = None

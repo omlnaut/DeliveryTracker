@@ -71,7 +71,9 @@ def mietplan(
                     upload_folder_id = drive_service.get_folder_id_by_path(
                         MIETPLAN_GDRIVE_FOLDER_ID, folder.path
                     )
-                    drive_service.upload_file(local_filename, upload_folder_id)
+                    drive_service.upload_file_from_path(
+                        local_filename, upload_folder_id
+                    )
                     os.remove(local_filename)
                     new_files.append(
                         create_telegram_output_event(

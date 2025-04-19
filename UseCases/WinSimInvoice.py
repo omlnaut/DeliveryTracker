@@ -65,7 +65,7 @@ def check_winsim_invoices(
 
                     try:
                         # Upload to Drive
-                        file_id = drive_service.upload_file(
+                        file_id = drive_service.upload_file_from_path(
                             file_path=file_path,
                             drive_folder_id=drive_folder_id,
                             mime_type="application/pdf",
