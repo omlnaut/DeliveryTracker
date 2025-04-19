@@ -13,7 +13,7 @@ from Infrastructure.telegram.azure_helper import (
 )
 from UseCases.mietplan.session_handling import (
     MAIN_FOLDER_ID,
-    download_file,
+    download_file_to_ram,
     get_folders,
     login,
     walk_from_top_folder,
@@ -65,16 +65,15 @@ def mietplan(
                 if file.creation_date > ref_date - timedelta(days=1):
                     logging.info(f"  File: {file.name}")
                     logging.info("    Downloading...")
-                    local_filename = download_file(session, file.url, file.name)
+                    file_in_ram = download_file_to_ram(session, file.url, file.name)
 
-                    logging.info(f"Upload to {local_filename} at path {folder.path}")
+                    logging.info(f"Upload to {file.name} at path {folder.path}")
                     upload_folder_id = drive_service.get_folder_id_by_path(
                         MIETPLAN_GDRIVE_FOLDER_ID, folder.path
                     )
-                    drive_service.upload_file_from_path(
-                        local_filename, upload_folder_id
+                    drive_service.upload_file_directly(
+                        file_in_ram, file.name, upload_folder_id
                     )
-                    os.remove(local_filename)
                     new_files.append(
                         create_telegram_output_event(
                             message=f"New mietplan file {file.name} at {folder.path}"

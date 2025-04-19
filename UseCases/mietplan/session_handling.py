@@ -1,3 +1,4 @@
+from io import BytesIO
 from typing import Generator
 import requests
 from bs4 import BeautifulSoup
@@ -85,16 +86,17 @@ def get_files(session: requests.Session, folder_id: str) -> list[FileMetadata]:
     return [FileMetadata.from_json(file_json) for file_json in response.json().values()]
 
 
-def download_file(session: requests.Session, download_path: str, filename: str) -> str:
+def download_file_to_ram(
+    session: requests.Session, download_path: str, filename: str
+) -> BytesIO:
     download_base = "https://mietplan-dresden.de"
     download_url = download_base + download_path
     response = session.get(download_url)
 
-    full_path = get_temp_dir() / filename
-    with open(full_path, "wb") as file:
-        file.write(response.content)
+    response.raise_for_status()  # Ensure the request was successful
 
-    return full_path.as_posix()
+    file_in_memory = BytesIO(response.content)
+    return file_in_memory
 
 
 def walk_from_top_folder(
