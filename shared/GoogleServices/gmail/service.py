@@ -1,53 +1,16 @@
-from dataclasses import dataclass
+"""Gmail service implementation for interacting with Gmail API."""
+
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta, timezone
 import base64
 import re
 from bs4 import BeautifulSoup
 from io import BytesIO
-from typing import List
+from typing import List, Dict, Optional, Any
 
 from shared.AzureHelper.download import get_temp_dir
-
-from .GmailQueryBuilder import GmailQueryBuilder
-
-# German month names mapping
-GERMAN_MONTHS = {
-    "Januar": 1,
-    "Februar": 2,
-    "März": 3,
-    "April": 4,
-    "Mai": 5,
-    "Juni": 6,
-    "Juli": 7,
-    "August": 8,
-    "September": 9,
-    "Oktober": 10,
-    "November": 11,
-    "Dezember": 12,
-}
-
-
-@dataclass
-class MessageId:
-    id: str
-    thread_id: str
-
-
-@dataclass
-class AttachmentData:
-    """Dataclass to represent an attachment with its filename and binary data"""
-
-    filename: str
-    data: bytes
-
-
-@dataclass
-class MemoryAttachment:
-    """Dataclass to represent an attachment in memory with filename and BytesIO content"""
-
-    filename: str
-    content: BytesIO
+from ..GmailQueryBuilder import GmailQueryBuilder
+from .models import MessageId, AttachmentData, MemoryAttachment, GERMAN_MONTHS
 
 
 class GmailService:
@@ -271,7 +234,7 @@ class GmailService:
             return "Unknown item"
 
         # Step 4: Extract the text you want.
-        # If you want the entire row’s text, preserving &reg;:
+        # If you want the entire row's text, preserving &reg;:
         item_html = next_tr.decode_contents(formatter="html").strip()  # type: ignore
 
         # OPTIONAL: If you only want a specific <span> inside the next <tr>
