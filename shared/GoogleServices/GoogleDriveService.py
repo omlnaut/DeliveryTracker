@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, BinaryIO
+from typing import Optional
 from io import BytesIO
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseUpload

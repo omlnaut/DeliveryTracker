@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 import base64
 import re
 from bs4 import BeautifulSoup
+from io import BytesIO
+from typing import List
 
 from shared.AzureHelper.download import get_temp_dir
 
@@ -30,6 +32,22 @@ GERMAN_MONTHS = {
 class MessageId:
     id: str
     thread_id: str
+
+
+@dataclass
+class AttachmentData:
+    """Dataclass to represent an attachment with its filename and binary data"""
+
+    filename: str
+    data: bytes
+
+
+@dataclass
+class MemoryAttachment:
+    """Dataclass to represent an attachment in memory with filename and BytesIO content"""
+
+    filename: str
+    content: BytesIO
 
 
 class GmailService:
@@ -94,15 +112,15 @@ class GmailService:
             print(f"Error fetching message details: {str(e)}")
             return None
 
-    def download_pdf_attachments(self, message_id) -> list[str]:
+    def _get_pdf_attachments(self, message_id) -> List[AttachmentData]:
         """
-        Download all PDF attachments from a given message.
+        Helper method to get PDF attachments from a message.
 
         Args:
             message_id (str): The ID of the message to get attachments from
 
         Returns:
-            list: List of dictionaries containing attachment details (filename, data)
+            List[AttachmentData]: List of AttachmentData named tuples with filename and data
         """
         if not self.service:
             self.authenticate()
@@ -132,15 +150,60 @@ class GmailService:
                         )
 
                         if attachment:
-                            download_path = get_temp_dir() / filename
-                            with open(download_path, "wb") as f:
-                                f.write(base64.urlsafe_b64decode(attachment["data"]))
-                            attachments.append(download_path.as_posix())
+                            attachment_data = base64.urlsafe_b64decode(
+                                attachment["data"]
+                            )
+                            attachments.append(
+                                AttachmentData(filename=filename, data=attachment_data)
+                            )
 
             return attachments
         except Exception as e:
-            print(f"Error downloading attachments: {str(e)}")
+            print(f"Error fetching PDF attachments: {str(e)}")
             return []
+
+    def download_pdf_attachments(self, message_id) -> list[str]:
+        """
+        Download all PDF attachments from a given message.
+
+        Args:
+            message_id (str): The ID of the message to get attachments from
+
+        Returns:
+            list[str]: List of file paths to the saved PDF attachments
+        """
+        attachments = self._get_pdf_attachments(message_id)
+        file_paths = []
+
+        for attachment in attachments:
+            download_path = get_temp_dir() / attachment.filename
+            with open(download_path, "wb") as f:
+                f.write(attachment.data)
+            file_paths.append(download_path.as_posix())
+
+        return file_paths
+
+    def download_pdf_attachments_to_ram(self, message_id) -> List[MemoryAttachment]:
+        """
+        Download all PDF attachments from a given message into memory.
+
+        Args:
+            message_id (str): The ID of the message to get attachments from
+
+        Returns:
+            List[MemoryAttachment]: List of MemoryAttachment objects containing
+            attachment details with filename and content (BytesIO object)
+        """
+        attachments = self._get_pdf_attachments(message_id)
+        memory_files = []
+
+        for attachment in attachments:
+            file_obj = BytesIO(attachment.data)
+            memory_files.append(
+                MemoryAttachment(filename=attachment.filename, content=file_obj)
+            )
+
+        return memory_files
 
     def get_recent_emails(self, days=2):
         """

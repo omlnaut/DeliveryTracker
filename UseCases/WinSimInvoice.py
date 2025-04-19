@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 import azure.functions as func
 
@@ -54,20 +53,19 @@ def check_winsim_invoices(
         for msg_id in message_ids:
             try:
                 # Download PDF attachments
-                pdf_files = gmail_service.download_pdf_attachments(msg_id)
+                pdf_files_in_memory = gmail_service.download_pdf_attachments_to_ram(
+                    msg_id
+                )
 
                 # Upload each PDF to Google Drive
-                for pdf_file in pdf_files:
-                    file_path = Path(pdf_file)
-                    if not file_path.exists():
-                        logging.warning(f"PDF file not found: {pdf_file}")
-                        continue
+                for pdf_file in pdf_files_in_memory:
 
                     try:
                         # Upload to Drive
-                        file_id = drive_service.upload_file_from_path(
-                            file_path=file_path,
-                            drive_folder_id=drive_folder_id,
+                        file_id = drive_service.upload_file_directly(
+                            pdf_file.content,
+                            pdf_file.filename,
+                            drive_folder_id,
                             mime_type="application/pdf",
                         )
 
@@ -79,9 +77,6 @@ def check_winsim_invoices(
                                 "status": "success",
                             }
                         )
-
-                        # Clean up the local file
-                        file_path.unlink()
 
                     except Exception as upload_error:
                         results.append(
