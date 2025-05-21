@@ -35,11 +35,11 @@ def _has_chapter_for_today(html) -> str | None:
     return None
 
 
-@app.timer_trigger(
-    schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
-)
-@task_output_binding()
-@telegram_output_binding()
+# @app.timer_trigger(
+#     schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
+# )
+# @task_output_binding()
+# @telegram_output_binding()
 def skeleton_soldier_update(
     mytimer: func.TimerRequest,
     taskOutput: func.Out[func.EventGridOutputEvent],
