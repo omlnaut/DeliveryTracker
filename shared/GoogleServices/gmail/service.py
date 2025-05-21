@@ -1,12 +1,13 @@
 """Gmail service implementation for interacting with Gmail API."""
 
 from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
 from datetime import datetime, timedelta, timezone
 import base64
 import re
 from bs4 import BeautifulSoup
 from io import BytesIO
-from typing import List, Dict, Optional, Any
+from typing import List
 
 from shared.AzureHelper.download import get_temp_dir
 from ..GmailQueryBuilder import GmailQueryBuilder
@@ -14,7 +15,7 @@ from .models import MessageId, AttachmentData, MemoryAttachment, GERMAN_MONTHS
 
 
 class GmailService:
-    def __init__(self, credentials):
+    def __init__(self, credentials: Credentials):
         self.credentials = credentials
         self.service = None
 
@@ -358,7 +359,7 @@ class GmailService:
         query = (
             GmailQueryBuilder()
             .from_email("order-update@amazon.de")
-            .subject("Ihr Paket kann bei DHL abgeholt werden", exact=True)
+            .subject("Ihr Paket kann bei DHL", exact=True)
             .after_date(time_threshold)
             .build()
         )
