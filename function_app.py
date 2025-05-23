@@ -3,7 +3,7 @@ import azure.functions as func
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-import UseCases.DeliveryTracker
+from UseCases.DeliveryTracker import DeliveryTracker
 import UseCases.SkeletonSoldier
 import UseCases.MangaUpdate
 import UseCases.WinSimInvoice
