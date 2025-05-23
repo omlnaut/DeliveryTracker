@@ -26,7 +26,7 @@ class GmailService:
             "gmail", "v1", credentials=self.credentials, cache_discovery=False
         )
 
-    def _query_messages(self, query) -> list[MessageId]:
+    def _query_messages_ids(self, query) -> list[MessageId]:
         """
         Query messages using Gmail API with the given query.
 
@@ -185,7 +185,7 @@ class GmailService:
         # Build query
         query = GmailQueryBuilder().after_date(time_threshold).build()
 
-        messages = self._query_messages(query)
+        messages = self._query_messages_ids(query)
         emails = []
 
         for message in messages:
@@ -341,6 +341,40 @@ class GmailService:
             "preview": preview,
         }
 
+    def query_messages_with_body(self, query: str) -> list[str]:
+        """
+        Query messages using Gmail API with the given query and return their body.
+
+        Args:
+            query (str): Gmail search query
+
+        Returns:
+            list: List of message bodies
+        """
+        messages = self._query_messages_ids(query)
+        message_bodies = []
+
+        for message in messages:
+            msg_details = self._fetch_message_details(message.id)
+            if msg_details:
+                if "parts" in msg_details["payload"]:
+                    parts = msg_details["payload"]["parts"]
+                    body = ""
+                    for part in parts:
+                        if part["mimeType"] == "text/html":
+                            body = base64.urlsafe_b64decode(
+                                part["body"]["data"].encode("utf-8")
+                            ).decode("utf-8")
+                            break
+                else:
+                    body = base64.urlsafe_b64decode(
+                        msg_details["payload"]["body"]["data"].encode("utf-8")
+                    ).decode("utf-8")
+
+                message_bodies.append(body)
+
+        return message_bodies
+
     def get_amazon_dhl_pickup_emails(self, hours=1):
         """
         Fetch Amazon DHL pickup notification emails from the last specified hours.
@@ -364,7 +398,7 @@ class GmailService:
             .build()
         )
 
-        messages = self._query_messages(query)
+        messages = self._query_messages_ids(query)
         emails = []
 
         for message in messages:
@@ -419,6 +453,6 @@ class GmailService:
             .build()
         )
 
-        messages = self._query_messages(query)
+        messages = self._query_messages_ids(query)
 
         return [msg.id for msg in messages]
