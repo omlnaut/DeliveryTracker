@@ -42,7 +42,7 @@ def dhl_mail_to_task(
         credentials = _load_credentials()
         gmail_service = GmailService(credentials)
 
-        raw_mails = get_amazon_dhl_pickup_emails(gmail_service, hours=10)
+        raw_mails = get_amazon_dhl_pickup_emails(gmail_service, hours=1)
 
         logging.info(f"Found {len(raw_mails)} DHL pickup notifications")
 

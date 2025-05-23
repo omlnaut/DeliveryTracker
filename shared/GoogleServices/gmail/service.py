@@ -5,13 +5,12 @@ from google.oauth2.credentials import Credentials
 from datetime import datetime, timedelta, timezone
 import base64
 import re
-from bs4 import BeautifulSoup
 from io import BytesIO
 from typing import List
 
 from shared.AzureHelper.download import get_temp_dir
 from ..GmailQueryBuilder import GmailQueryBuilder
-from .models import MessageId, AttachmentData, MemoryAttachment, GERMAN_MONTHS
+from .models import MessageId, AttachmentData, MemoryAttachment
 
 
 class GmailService:
