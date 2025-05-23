@@ -13,6 +13,8 @@ from Infrastructure.telegram.azure_helper import (
     create_telegram_output_event,
     telegram_output_binding,
 )
+from UseCases.DeliveryTracker.fetch_mail import get_amazon_dhl_pickup_emails
+from UseCases.DeliveryTracker.parsing import parse_dhl_pickup_email_html
 from function_app import app
 from shared.GoogleServices import GmailService
 from shared.AzureHelper import get_secret
@@ -40,21 +42,18 @@ def dhl_mail_to_task(
         credentials = _load_credentials()
         gmail_service = GmailService(credentials)
 
-        dhl_mails = gmail_service.get_amazon_dhl_pickup_emails(hours=1)
-        if not dhl_mails:
-            nothing_new_msg = "No DHL pickup notifications found"
-            logging.info({"message": nothing_new_msg})
-            return
+        raw_mails = get_amazon_dhl_pickup_emails(gmail_service, hours=10)
 
-        logging.info(f"Found {len(dhl_mails)} DHL pickup notifications")
+        logging.info(f"Found {len(raw_mails)} DHL pickup notifications")
 
         tasks: list[func.EventGridOutputEvent] = []
-        for mail in dhl_mails:
+        for mail in raw_mails:
+            parsed_mail = parse_dhl_pickup_email_html(mail)
             notes = (
-                f"{mail['preview']}\n"
-                f"Abholort: {mail['pickup_location']}\n"
-                f"Abholen bis: {mail['due_date']}\n"
-                f"Tracking: {mail['tracking_number']}"
+                f"{parsed_mail.preview}\n"
+                f"Abholort: {parsed_mail.pickup_location}\n"
+                f"Abholen bis: {parsed_mail.due_date}\n"
+                f"Tracking: {parsed_mail.tracking_number}"
             )
             tasks.append(create_task_output_event(title="Paket abholen", notes=notes))
 
