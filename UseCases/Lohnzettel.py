@@ -26,7 +26,7 @@ def save_lohnzettel(req: func.HttpRequest):
         .build()
     )
 
-    message_ids = [message.id for message in gmail_service._query_messages(query)]
+    message_ids = [message.id for message in gmail_service._query_messages_ids(query)]
 
     for msg_id in message_ids:
         file_paths = [
