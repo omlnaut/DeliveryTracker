@@ -52,30 +52,7 @@ def parse_dhl_pickup_email_html(html_content: str) -> EmailData:
 
     # Extract pickup location
     # First find the ABHOLORT section
-    location_text = ""
-    abholort_match = re.search(
-        r"ABHOLORT\s*\n\s*DHL\s*\n\s*(.*?)\s*Öffnungszeiten",
-        text_content,
-        re.DOTALL,
-    )
-    if abholort_match:
-        # Clean up the location text and only keep Packstation and address
-        location_lines = [
-            line.strip() for line in abholort_match.group(1).split("\n") if line.strip()
-        ]
-        # Only keep Packstation and street address
-        packstation = next(
-            (line for line in location_lines if "Packstation" in line), ""
-        )
-        street = next(
-            (
-                line
-                for line in location_lines
-                if any(c.isdigit() for c in line) and "Packstation" not in line
-            ),
-            "",
-        )
-        location_text = f"{packstation}, {street}" if packstation and street else ""
+    location_text = find_adress(soup)
 
     # Extract due date
     due_date_match = re.search(
@@ -118,6 +95,41 @@ def parse_dhl_pickup_email_html(html_content: str) -> EmailData:
         due_date=due_date,
         preview=preview,
     )
+
+
+def find_adress(soup: BeautifulSoup) -> str:
+    """
+    Extract the address from DHL notification email HTML.
+    Returns formatted address like "Packstation 158, Südhöhe 38"
+    """
+    # Find the span containing "ABHOLORT"
+    abholort_span = soup.find("span", string=re.compile(r"ABHOLORT"))
+    if not abholort_span:
+        return "Address not found"
+
+    # Navigate to the tr that contains the address information
+    abholort_tr = abholort_span.find_parent("tr")
+    if not abholort_tr:
+        return "Address not found"
+
+    # The location name is in the 2nd tr after the header
+    location_tr = abholort_tr.find_next_sibling("tr").find_next_sibling("tr")  # type: ignore
+    if not location_tr:
+        return "Address not found"
+
+    # The street address is in the next tr
+    address_tr = location_tr.find_next_sibling("tr")
+    if not address_tr:
+        return "Address not found"
+
+    # Extract the text and clean it
+    location_text = location_tr.get_text(strip=True)
+    address_text = address_tr.get_text(strip=True)
+
+    # Format the complete address
+    full_address = f"{location_text}, {address_text}"
+
+    return full_address
 
 
 def find_preview(soup: BeautifulSoup) -> str:
