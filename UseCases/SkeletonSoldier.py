@@ -35,6 +35,47 @@ def _has_chapter_for_today(html) -> str | None:
     return None
 
 
+@app.route(route="test_skeleton_soldier")
+@telegram_output_binding()
+def test_skeleton_soldier(
+    req: func.HttpRequest, telegramOutput: func.Out[func.EventGridOutputEvent]
+):
+    logging.info("start skeleton soldier test")
+
+    url = "https://www.reddit.com/r/SkeletonSoldier/new.json"
+    headers = {"User-Agent": "script:deliverytracker:v1.0 (by /u/omlnaut)"}
+    html = requests.get(url, headers=headers)
+    logging.info(f"Response status code: {html.status_code}")
+
+    telegramOutput.set(
+        create_telegram_output_event(
+            message=f"Skeleton Soldier test response status code: {html.status_code}"
+        )
+    )
+    if html.status_code != 200:
+        logging.info(html.content.decode("utf-8"))
+        return func.HttpResponse(
+            "Failed to fetch data from Reddit", status_code=html.status_code
+        )
+    json = html.json()
+
+    from datetime import datetime, timezone
+
+    for child in json["data"]["children"]:
+        data = child["data"]
+        created_datetime = datetime.fromtimestamp(data["created_utc"], timezone.utc)
+        flair = data["link_flair_text"]
+        title = data["title"]
+
+        response_parts = []
+        if flair is not None and flair.lower() == "new chapter":
+            print(f"{created_datetime} - {title}")
+            response_parts.append(f"{created_datetime} - {title}")
+
+    response = "\n".join(response_parts)
+    return func.HttpResponse(response)
+
+
 # @app.timer_trigger(
 #     schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
 # )
