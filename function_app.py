@@ -4,6 +4,7 @@ import azure.functions as func
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
 from UseCases.DeliveryTracker import DeliveryTracker
+from UseCases.ReturnTracker import ReturnTracker
 import UseCases.SkeletonSoldier
 import UseCases.MangaUpdate
 import UseCases.WinSimInvoice
