@@ -14,3 +14,4 @@ UseCases/MangaUpdate/openapi.yaml
 mietplan_credentials.json
 *.pdf
 lohnzettel_pw.secret
+investigations/amazon_rueckgabe.html
