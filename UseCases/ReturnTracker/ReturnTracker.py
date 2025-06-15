@@ -42,7 +42,7 @@ def return_tracker(
         credentials = _load_credentials()
         gmail_service = GmailService(credentials)
 
-        raw_mails = get_amazon_return_mails(gmail_service, hours=8 * 24)
+        raw_mails = get_amazon_return_mails(gmail_service, hours=1)
 
         logging.info(f"Found {len(raw_mails)} DHL return notifications")
 
