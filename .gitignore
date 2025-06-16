@@ -15,3 +15,4 @@ mietplan_credentials.json
 *.pdf
 lohnzettel_pw.secret
 investigations/amazon_rueckgabe.html
+investigations/reddit_credentials.json

@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 from datetime import datetime
+import json
 import logging
 
 from bs4 import BeautifulSoup
@@ -16,7 +18,54 @@ from Infrastructure.telegram.azure_helper import (
     telegram_output_binding,
 )
 from function_app import app
+from shared.AzureHelper.secrets import get_secret
 from shared.date_utils import is_at_most_one_day_old
+
+
+@dataclass
+class RedditCredentials:
+    client_id: str
+    client_secret: str
+    username: str
+    password: str
+
+    @property
+    def user_agent(self) -> str:
+        return f"script:deliverytracker:v1.0 (by /u/{self.username})"
+
+
+def _get_reddit_credentials() -> RedditCredentials:
+    raw_credentials = json.loads(get_secret("RedditTrackerApp"))
+
+    return RedditCredentials(
+        client_id=raw_credentials["client_id"],
+        client_secret=raw_credentials["client_secret"],
+        username=raw_credentials["username"],
+        password=raw_credentials["password"],
+    )
+
+
+def _get_reddit_access_token(credentials: RedditCredentials) -> str:
+    """Get access token for Reddit API using client credentials."""
+    logging.info("Fetching Reddit access token")
+    url = "https://www.reddit.com/api/v1/access_token"
+    headers = {
+        "User-Agent": credentials.user_agent,
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    data = {
+        "grant_type": "password",
+        "username": credentials.username,
+        "password": credentials.password,
+    }
+    response = requests.post(
+        url,
+        headers=headers,
+        data=data,
+        auth=(credentials.client_id, credentials.client_secret),
+    )
+    response.raise_for_status()
+    return response.json()["access_token"]
 
 
 def _has_chapter_for_today(html) -> str | None:
@@ -42,8 +91,13 @@ def test_skeleton_soldier(
 ):
     logging.info("start skeleton soldier test")
 
-    url = "https://www.reddit.com/r/SkeletonSoldier/new.json"
-    headers = {"User-Agent": "script:deliverytracker:v1.0 (by /u/omlnaut)"}
+    url = "https://oauth.reddit.com/r/SkeletonSoldier/new.json"
+    token = _get_reddit_access_token(_get_reddit_credentials())
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "User-Agent": "script:deliverytracker:v1.0 (by /u/omlnaut)",
+    }
+    logging.info(f"Fetching data from {url}")
     html = requests.get(url, headers=headers)
     logging.info(f"Response status code: {html.status_code}")
 
