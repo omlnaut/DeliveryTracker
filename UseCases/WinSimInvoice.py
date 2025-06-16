@@ -7,7 +7,7 @@ from Infrastructure.telegram.azure_helper import (
     telegram_output_binding,
 )
 from function_app import app
-from shared.AzureHelper.secrets import load_gcloud_credentials
+from shared.AzureHelper.google_credentials import load_gcloud_credentials
 from shared.GoogleServices import GmailService, GDriveService
 
 
@@ -19,7 +19,7 @@ def check_winsim_invoices(
     mytimer: func.TimerRequest, telegramOutput: func.Out[func.EventGridOutputEvent]
 ):
     """
-    HTTP-triggered Azure Function that:
+    Time-triggered Azure Function that:
     1. Checks for new WinSIM invoice emails
     2. Downloads any PDF attachments
     3. Uploads them to a specified Google Drive folder

@@ -19,16 +19,11 @@ from UseCases.mietplan.session_handling import (
     walk_from_top_folder,
 )
 from function_app import app
+from shared.AzureHelper.google_credentials import load_gcloud_credentials
 from shared.AzureHelper.secrets import get_secret
 from shared.GoogleServices import GDriveService
 
 MIETPLAN_GDRIVE_FOLDER_ID = "19gdVV_DMtdQU0xi7TgfKJCRRc4c7m0fd"
-
-
-def _load_credentials() -> Credentials:
-    secret_str = get_secret("GcloudCredentials")
-    credentials_info = json.loads(secret_str)  # type: ignore
-    return Credentials.from_authorized_user_info(credentials_info)
 
 
 @app.timer_trigger(
@@ -39,7 +34,7 @@ def mietplan(
     myTimer: func.TimerRequest, telegramOutput: func.Out[func.EventGridOutputEvent]
 ) -> None:
     try:
-        credentials = _load_credentials()
+        credentials = load_gcloud_credentials()
         drive_service = GDriveService(credentials)
         username = get_secret("MietplanUsername")
         password = get_secret("MietplanPassword")

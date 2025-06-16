@@ -8,7 +8,7 @@ from function_app import app
 
 import azure.functions as func
 
-from shared.AzureHelper.secrets import load_gcloud_credentials
+from shared.AzureHelper.google_credentials import load_gcloud_credentials
 from shared.GoogleServices import GmailService
 from shared.GoogleServices.GmailQueryBuilder import GmailQueryBuilder
 
