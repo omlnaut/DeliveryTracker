@@ -1,2 +1,2 @@
 from .RedditCredentials import RedditCredentials as RedditCredentials
-from RedditClient import RedditClient as RedditClient
+from .RedditClient import RedditClient as RedditClient
