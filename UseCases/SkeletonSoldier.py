@@ -1,167 +1,144 @@
-from dataclasses import dataclass
-from datetime import datetime
-import json
-import logging
+# from dataclasses import dataclass
+# from datetime import datetime
+# import json
+# import logging
 
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 
-import azure.functions as func
-import requests
+# import azure.functions as func
+# import requests
 
-from Infrastructure.google_task.azure_helper import (
-    TaskListType,
-    create_task_output_event,
-    task_output_binding,
-)
-from Infrastructure.telegram.azure_helper import (
-    create_telegram_output_event,
-    telegram_output_binding,
-)
-from function_app import app
-from shared.AzureHelper.secrets import get_secret
-from shared.date_utils import is_at_most_one_day_old
-
-
-@dataclass
-class RedditCredentials:
-    client_id: str
-    client_secret: str
-    username: str
-    password: str
-
-    @property
-    def user_agent(self) -> str:
-        return f"script:deliverytracker:v1.0 (by /u/{self.username})"
-
-
-def _get_reddit_credentials() -> RedditCredentials:
-    raw_credentials = json.loads(get_secret("RedditTrackerApp"))
-
-    return RedditCredentials(
-        client_id=raw_credentials["client_id"],
-        client_secret=raw_credentials["client_secret"],
-        username=raw_credentials["username"],
-        password=raw_credentials["password"],
-    )
-
-
-def _get_reddit_access_token(credentials: RedditCredentials) -> str:
-    """Get access token for Reddit API using client credentials."""
-    logging.info("Fetching Reddit access token")
-    url = "https://www.reddit.com/api/v1/access_token"
-    headers = {
-        "User-Agent": credentials.user_agent,
-        "Content-Type": "application/x-www-form-urlencoded",
-    }
-    data = {
-        "grant_type": "password",
-        "username": credentials.username,
-        "password": credentials.password,
-    }
-    response = requests.post(
-        url,
-        headers=headers,
-        data=data,
-        auth=(credentials.client_id, credentials.client_secret),
-    )
-    response.raise_for_status()
-    return response.json()["access_token"]
-
-
-def _has_chapter_for_today(html) -> str | None:
-    """Return True if a chapter with today's date is found."""
-    soup = BeautifulSoup(html, "html.parser")
-    chapters_list = soup.find("div", {"id": "chapters-list"})
-    chapter_links = chapters_list.find_all("a", class_="chplinks")  # type: ignore
-    for link in chapter_links:
-        span = link.find("span", style="float:right;text-align: right;")  # type: ignore
-        if span:
-            date_text = span.get_text(strip=True)
-            date_obj = datetime.strptime(date_text, "%Y-%m-%d").date()
-            if is_at_most_one_day_old(date_obj):
-                chapter_number = link.get_text().split("\n")[1].strip()
-                return chapter_number
-    return None
-
-
-@app.route(route="test_skeleton_soldier")
-@telegram_output_binding()
-def test_skeleton_soldier(
-    req: func.HttpRequest, telegramOutput: func.Out[func.EventGridOutputEvent]
-):
-    logging.info("start skeleton soldier test")
-
-    url = "https://oauth.reddit.com/r/SkeletonSoldier/new.json"
-    token = _get_reddit_access_token(_get_reddit_credentials())
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "User-Agent": "script:deliverytracker:v1.0 (by /u/omlnaut)",
-    }
-    logging.info(f"Fetching data from {url}")
-    html = requests.get(url, headers=headers)
-    logging.info(f"Response status code: {html.status_code}")
-
-    telegramOutput.set(
-        create_telegram_output_event(
-            message=f"Skeleton Soldier test response status code: {html.status_code}"
-        )
-    )
-    if html.status_code != 200:
-        logging.info(html.content.decode("utf-8"))
-        return func.HttpResponse(
-            "Failed to fetch data from Reddit", status_code=html.status_code
-        )
-    json = html.json()
-
-    from datetime import datetime, timezone
-
-    for child in json["data"]["children"]:
-        data = child["data"]
-        created_datetime = datetime.fromtimestamp(data["created_utc"], timezone.utc)
-        flair = data["link_flair_text"]
-        title = data["title"]
-
-        response_parts = []
-        if flair is not None and flair.lower() == "new chapter":
-            print(f"{created_datetime} - {title}")
-            response_parts.append(f"{created_datetime} - {title}")
-
-    response = "\n".join(response_parts)
-    return func.HttpResponse(response)
-
-
-# @app.timer_trigger(
-#     schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
+# from Infrastructure.google_task.azure_helper import (
+#     TaskListType,
+#     create_task_output_event,
+#     task_output_binding,
 # )
-# @task_output_binding()
+# from Infrastructure.telegram.azure_helper import (
+#     create_telegram_output_event,
+#     telegram_output_binding,
+# )
+# from function_app import app
+# from shared.AzureHelper.secrets import get_secret
+# from shared.date_utils import is_at_most_one_day_old
+
+
+# def _get_reddit_access_token(credentials: RedditCredentials) -> str:
+#     """Get access token for Reddit API using client credentials."""
+#     logging.info("Fetching Reddit access token")
+#     url = "https://www.reddit.com/api/v1/access_token"
+#     headers = {
+#         "User-Agent": credentials.user_agent,
+#         "Content-Type": "application/x-www-form-urlencoded",
+#     }
+#     data = {
+#         "grant_type": "password",
+#         "username": credentials.username,
+#         "password": credentials.password,
+#     }
+#     response = requests.post(
+#         url,
+#         headers=headers,
+#         data=data,
+#         auth=(credentials.client_id, credentials.client_secret),
+#     )
+#     response.raise_for_status()
+#     return response.json()["access_token"]
+
+
+# def _has_chapter_for_today(html) -> str | None:
+#     """Return True if a chapter with today's date is found."""
+#     soup = BeautifulSoup(html, "html.parser")
+#     chapters_list = soup.find("div", {"id": "chapters-list"})
+#     chapter_links = chapters_list.find_all("a", class_="chplinks")  # type: ignore
+#     for link in chapter_links:
+#         span = link.find("span", style="float:right;text-align: right;")  # type: ignore
+#         if span:
+#             date_text = span.get_text(strip=True)
+#             date_obj = datetime.strptime(date_text, "%Y-%m-%d").date()
+#             if is_at_most_one_day_old(date_obj):
+#                 chapter_number = link.get_text().split("\n")[1].strip()
+#                 return chapter_number
+#     return None
+
+
+# @app.route(route="test_skeleton_soldier")
 # @telegram_output_binding()
-def skeleton_soldier_update(
-    mytimer: func.TimerRequest,
-    taskOutput: func.Out[func.EventGridOutputEvent],
-    telegramOutput: func.Out[func.EventGridOutputEvent],
-):
-    try:
-        url = "https://demonicscans.org/manga/Skeleton-Soldier"
+# def test_skeleton_soldier(
+#     req: func.HttpRequest, telegramOutput: func.Out[func.EventGridOutputEvent]
+# ):
+#     logging.info("start skeleton soldier test")
 
-        html = requests.get(url).text
+#     url = "https://oauth.reddit.com/r/SkeletonSoldier/new.json"
+#     token = _get_reddit_access_token(_get_reddit_credentials())
+#     headers = {
+#         "Authorization": f"Bearer {token}",
+#         "User-Agent": "script:deliverytracker:v1.0 (by /u/omlnaut)",
+#     }
+#     logging.info(f"Fetching data from {url}")
+#     html = requests.get(url, headers=headers)
+#     logging.info(f"Response status code: {html.status_code}")
 
-        chapter_number = _has_chapter_for_today(html)
-        if chapter_number:
-            taskOutput.set(
-                create_task_output_event(
-                    title=f"Skeleton Soldier {chapter_number}",
-                    notes=url,
-                    tasklist=TaskListType.MANGA,
-                )
-            )
-            logging.info(f"Skeleton Soldier: {chapter_number}")
-            return
+#     telegramOutput.set(
+#         create_telegram_output_event(
+#             message=f"Skeleton Soldier test response status code: {html.status_code}"
+#         )
+#     )
+#     if html.status_code != 200:
+#         logging.info(html.content.decode("utf-8"))
+#         return func.HttpResponse(
+#             "Failed to fetch data from Reddit", status_code=html.status_code
+#         )
+#     json = html.json()
 
-        logging.info("Skeleton Soldier: No update found")
-    except Exception as e:
-        logging.error(str(e))
-        telegramOutput.set(
-            create_telegram_output_event(
-                message=f"Error in skeleton_soldier_update: {str(e)}"
-            )
-        )
+#     from datetime import datetime, timezone
+
+#     for child in json["data"]["children"]:
+#         data = child["data"]
+#         created_datetime = datetime.fromtimestamp(data["created_utc"], timezone.utc)
+#         flair = data["link_flair_text"]
+#         title = data["title"]
+
+#         response_parts = []
+#         if flair is not None and flair.lower() == "new chapter":
+#             print(f"{created_datetime} - {title}")
+#             response_parts.append(f"{created_datetime} - {title}")
+
+#     response = "\n".join(response_parts)
+#     return func.HttpResponse(response)
+
+
+# # @app.timer_trigger(
+# #     schedule="7 6 * * *", arg_name="mytimer", run_on_startup=False, use_monitor=False
+# # )
+# # @task_output_binding()
+# # @telegram_output_binding()
+# def skeleton_soldier_update(
+#     mytimer: func.TimerRequest,
+#     taskOutput: func.Out[func.EventGridOutputEvent],
+#     telegramOutput: func.Out[func.EventGridOutputEvent],
+# ):
+#     try:
+#         url = "https://demonicscans.org/manga/Skeleton-Soldier"
+
+#         html = requests.get(url).text
+
+#         chapter_number = _has_chapter_for_today(html)
+#         if chapter_number:
+#             taskOutput.set(
+#                 create_task_output_event(
+#                     title=f"Skeleton Soldier {chapter_number}",
+#                     notes=url,
+#                     tasklist=TaskListType.MANGA,
+#                 )
+#             )
+#             logging.info(f"Skeleton Soldier: {chapter_number}")
+#             return
+
+#         logging.info("Skeleton Soldier: No update found")
+#     except Exception as e:
+#         logging.error(str(e))
+#         telegramOutput.set(
+#             create_telegram_output_event(
+#                 message=f"Error in skeleton_soldier_update: {str(e)}"
+#             )
+#         )
