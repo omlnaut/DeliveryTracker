@@ -56,7 +56,7 @@ def one_punch_man_update(
             tasks.append(
                 create_task_output_event(
                     title=f"One Punch Man {chapter.title}",
-                    notes="https://onepunch-man.com/manga/",
+                    notes=chapter.destination_url or "no url found",
                     tasklist=TaskListType.MANGA,
                 )
             )
