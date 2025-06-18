@@ -46,20 +46,30 @@ class RedditClient:
     def get_posts(self, subreddit: str) -> list[RedditPost]:
         """Fetch posts from a subreddit."""
         logging.info(f"Fetching posts from subreddit: {subreddit}")
-        url = self.POST_BASE_URL.format(subreddit=subreddit)
-        headers = {
-            "Authorization": f"Bearer {self._get_access_token()}",
-            "User-Agent": self.credentials.user_agent,
-        }
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        posts_data = response.json().get("data", {}).get("children", [])
+        url = self.build_subreddit_url(subreddit)
+        raw_posts = self._get_raw_post_response(url)
+        posts_data = raw_posts.get("data", {}).get("children", [])
         return [
             RedditPost(
                 subreddit=subreddit,
                 created_at_timestamp=post["data"]["created_utc"],
                 title=post["data"]["title"],
                 flair=post["data"].get("link_flair_text"),
+                destination_url=post["data"].get("url", None),
             )
             for post in posts_data
         ]
+
+    def build_subreddit_url(self, subreddit) -> str:
+        url = self.POST_BASE_URL.format(subreddit=subreddit)
+        return url
+
+    def _get_raw_post_response(self, url: str) -> dict:
+        """Get raw post response from Reddit."""
+        headers = {
+            "Authorization": f"Bearer {self._get_access_token()}",
+            "User-Agent": self.credentials.user_agent,
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return response.json()

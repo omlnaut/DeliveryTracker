@@ -8,6 +8,7 @@ class RedditPost:
     created_at_timestamp: int
     title: str
     flair: str | None
+    destination_url: str | None = None
 
     @property
     def created_at_datetime(self) -> datetime:
