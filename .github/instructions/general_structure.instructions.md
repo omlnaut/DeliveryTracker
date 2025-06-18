@@ -18,3 +18,6 @@ Base path for the repository (inside its devcontainer) is `/workspaces/DeliveryT
 - `function_app.py`: The main entry point for the Azure Functions app. It is responsible for loading the functions from the `usecases` and `infrastructure` folders and registering them with the Azure Functions runtime.
 
 The `investigations` folder is for testing out new use case ideas. The notebooks in there are not guaranteed to work.
+
+# Coding
+When creating new python files, the linter will not pick them up automatically. I have to use the "python: restart language server" command in the command palette to make it aware of the new files. This is a limitation of the Azure Functions Python extension.
